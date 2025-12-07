@@ -1,4 +1,4 @@
-import { GraphData } from '../types/graph.types';
+import type { GraphData } from '../types/graph.types';
 
 const COLORS = {
   awareness: '#FFFFFF',
