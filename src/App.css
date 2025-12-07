@@ -14,10 +14,15 @@ html, body, #root {
   width: 100vw;
   height: 100vh;
   background: #0D1326;
+  background-image: url('/neurolinks-bg.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   position: relative;
   overflow: hidden;
 }
 
+/* Header */
 .app-header {
   position: absolute;
   top: 16px;
@@ -25,19 +30,42 @@ html, body, #root {
   z-index: 10;
 }
 
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.norvan-logo {
+  width: 40px;
+  height: 40px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.norvan-logo:hover {
+  opacity: 1;
+}
+
+.header-titles {
+  display: flex;
+  flex-direction: column;
+}
+
 .title-en {
   font-family: 'Poppins', sans-serif;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #FFFFFF;
   margin: 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
 }
 
 .title-fa {
   font-family: 'Vazirmatn', 'Poppins', sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
-  margin: 4px 0 0 0;
+  margin: 2px 0 0 0;
 }
 
 /* Search */
@@ -52,7 +80,7 @@ html, body, #root {
 .search-input {
   width: 220px;
   padding: 10px 36px 10px 14px;
-  background: rgba(19, 34, 56, 0.9);
+  background: rgba(13, 19, 38, 0.85);
   border: 1px solid rgba(102, 211, 250, 0.3);
   border-radius: 8px;
   color: #FFFFFF;
@@ -60,6 +88,7 @@ html, body, #root {
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  backdrop-filter: blur(10px);
 }
 
 .search-input::placeholder {
@@ -68,6 +97,7 @@ html, body, #root {
 
 .search-input:focus {
   border-color: #66D3FA;
+  box-shadow: 0 0 15px rgba(102, 211, 250, 0.2);
 }
 
 .search-clear {
@@ -117,10 +147,11 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(13, 19, 38, 0.9);
+  background: rgba(13, 19, 38, 0.85);
   padding: 12px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
   z-index: 10;
 }
 
@@ -141,18 +172,22 @@ html, body, #root {
 
 .legend-line.heals {
   background: #009E60;
+  box-shadow: 0 0 6px #009E60;
 }
 
 .legend-line.conflicts {
   background: #E63946;
+  box-shadow: 0 0 6px #E63946;
 }
 
 .legend-line.corrupts {
   background: #7F4FC9;
+  box-shadow: 0 0 6px #7F4FC9;
 }
 
 .legend-line.serves {
-  background: rgba(102, 211, 250, 0.6);
+  background: rgba(102, 211, 250, 0.8);
+  box-shadow: 0 0 6px rgba(102, 211, 250, 0.5);
 }
 
 /* Node styles */
@@ -174,22 +209,40 @@ html, body, #root {
 
 @keyframes pulse-glow {
   0%, 100% {
-    stroke-opacity: 0.3;
+    stroke-opacity: 0.4;
+    transform: scale(1);
   }
   50% {
-    stroke-opacity: 0.6;
+    stroke-opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Awareness node special glow */
+.awareness-glow {
+  animation: awareness-pulse 2s ease-in-out infinite;
+}
+
+@keyframes awareness-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    r: 70;
+  }
+  50% {
+    opacity: 0.6;
+    r: 80;
   }
 }
 
 /* Labels */
 .label-en {
   pointer-events: none;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .label-fa {
   pointer-events: none;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 /* Links */
@@ -209,17 +262,22 @@ html, body, #root {
     right: 12px;
   }
 
+  .norvan-logo {
+    width: 32px;
+    height: 32px;
+  }
+
   .title-en {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   .title-fa {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .search-input {
     width: 100%;
-    max-width: 280px;
+    max-width: 240px;
   }
 
   .legend {

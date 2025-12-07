@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { CognitiveGraph } from './components/Graph/CognitiveGraph';
 import { InfoPanel } from './components/InfoPanel/InfoPanel';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
-import { TesseractMesh } from './components/Background/TesseractMesh';
 import { shahnamehData } from './data/shahnameh-graph';
 import type { CognitiveNode } from './types/graph.types';
 import './App.css';
@@ -38,11 +37,16 @@ function App() {
 
   return (
     <div className="app-container">
-      <TesseractMesh />
+      {/* Background handled by CSS */}
       
       <header className="app-header">
-        <h1 className="title-en">Shahnameh Cognitive OS</h1>
-        <p className="title-fa">سیستم عامل شناختی شاهنامه</p>
+        <div className="header-brand">
+          <img src="/norvan-logo.png" alt="Norvan" className="norvan-logo" />
+          <div className="header-titles">
+            <h1 className="title-en">Shahnameh Cognitive OS</h1>
+            <p className="title-fa">سیستم عامل شناختی شاهنامه</p>
+          </div>
+        </div>
         
         <div className="search-container">
           <input
