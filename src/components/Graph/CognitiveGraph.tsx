@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import type { GraphData, CognitiveNode, RelationshipType } from '../../types/graph.types';
 
@@ -18,60 +18,72 @@ const CONNECTION_COLORS: Record<RelationshipType, string> = {
 
 export function CognitiveGraph({ data, onNodeClick }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const updateDimensions = () => {
-      if (svgRef.current?.parentElement) {
-        setDimensions({
-          width: svgRef.current.parentElement.clientWidth,
-          height: svgRef.current.parentElement.clientHeight,
-        });
-      }
-    };
+    if (!svgRef.current || !containerRef.current) return;
 
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
-  }, []);
+    const container = containerRef.current;
+    const width = container.clientWidth || window.innerWidth;
+    const height = container.clientHeight || window.innerHeight;
 
-  useEffect(() => {
-    if (!svgRef.current || dimensions.width === 0) return;
+    if (width === 0 || height === 0) return;
 
-    const svg = d3.select(svgRef.current);
+    const svg = d3.select(svgRef.current)
+      .attr('width', width)
+      .attr('height', height);
+    
     svg.selectAll('*').remove();
-
-    const { width, height } = dimensions;
 
     // Create container group for zoom
     const g = svg.append('g');
 
     // Zoom behavior
     const zoom = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.3, 3])
+      .scaleExtent([0.2, 4])
       .on('zoom', (event) => {
         g.attr('transform', event.transform);
       });
 
     svg.call(zoom);
 
+    // Center the view initially
+    const initialTransform = d3.zoomIdentity
+      .translate(width / 4, height / 4)
+      .scale(0.6);
+    svg.call(zoom.transform, initialTransform);
+
     // Prepare data for simulation
-    const nodes = data.nodes.map(d => ({ ...d }));
+    const nodes = data.nodes.map(d => ({ 
+      ...d,
+      x: width / 2 + (Math.random() - 0.5) * 400,
+      y: height / 2 + (Math.random() - 0.5) * 400
+    }));
+    
     const links = data.connections.map(d => ({
       ...d,
       source: d.source,
       target: d.target,
     }));
 
-    // Force simulation
+    // Force simulation with STRONGER forces
     const simulation = d3.forceSimulation(nodes as d3.SimulationNodeDatum[])
       .force('link', d3.forceLink(links)
         .id((d: any) => d.id)
-        .distance(150)
+        .distance(180)
+        .strength(0.3)
       )
-      .force('charge', d3.forceManyBody().strength(-800))
+      .force('charge', d3.forceManyBody()
+        .strength(-1500)
+        .distanceMax(800)
+      )
       .force('center', d3.forceCenter(width / 2, height / 2))
-      .force('collision', d3.forceCollide().radius((d: any) => d.size * 0.6 + 20));
+      .force('collision', d3.forceCollide()
+        .radius((d: any) => d.size * 0.8 + 40)
+        .strength(0.8)
+      )
+      .force('x', d3.forceX(width / 2).strength(0.03))
+      .force('y', d3.forceY(height / 2).strength(0.03));
 
     // Draw connections
     const link = g.append('g')
@@ -81,8 +93,8 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       .enter()
       .append('line')
       .attr('stroke', d => CONNECTION_COLORS[d.type])
-      .attr('stroke-width', d => d.type === 'corrupts' ? 2 : 1.5)
-      .attr('stroke-opacity', 0.6)
+      .attr('stroke-width', d => d.type === 'corrupts' ? 2.5 : 1.5)
+      .attr('stroke-opacity', 0.7)
       .attr('stroke-dasharray', d => d.type === 'corrupts' ? '5,5' : 'none');
 
     // Draw nodes
@@ -133,10 +145,10 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       // Glow effect for awareness node
       if (d.level === 'awareness') {
         el.append('circle')
-          .attr('r', size + 10)
+          .attr('r', size + 15)
           .attr('fill', 'none')
           .attr('stroke', '#66D3FA')
-          .attr('stroke-width', 1)
+          .attr('stroke-width', 2)
           .attr('stroke-opacity', 0.5)
           .attr('class', 'glow-ring');
       }
@@ -191,31 +203,22 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       event.subject.fy = null;
     }
 
-    // Breathing animation
-    const breathe = () => {
-      node.selectAll('circle, polygon')
-        .transition()
-        .duration(2000)
-        .attr('transform', 'scale(1.05)')
-        .transition()
-        .duration(2000)
-        .attr('transform', 'scale(1)')
-        .on('end', breathe);
-    };
-    breathe();
+    // Run simulation hot for a bit then cool
+    simulation.alpha(1).restart();
 
     return () => {
       simulation.stop();
     };
-  }, [data, dimensions, onNodeClick]);
+  }, [data, onNodeClick]);
 
   return (
-    <svg 
-      ref={svgRef} 
-      width="100%" 
-      height="100%"
-      className="cognitive-graph"
-    />
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}>
+      <svg 
+        ref={svgRef} 
+        className="cognitive-graph"
+        style={{ display: 'block' }}
+      />
+    </div>
   );
 }
 
