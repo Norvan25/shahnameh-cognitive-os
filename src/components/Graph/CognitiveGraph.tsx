@@ -6,6 +6,7 @@ interface Props {
   data: GraphData;
   onNodeClick: (node: CognitiveNode) => void;
   selectedNodeId?: string;
+  highlightedNodeIds?: string[];
 }
 
 const CONNECTION_COLORS: Record<RelationshipType, string> = {
@@ -16,10 +17,38 @@ const CONNECTION_COLORS: Record<RelationshipType, string> = {
   integrates_with: 'rgba(255, 255, 255, 0.3)',
 };
 
-export function CognitiveGraph({ data, onNodeClick }: Props) {
+export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
+  const nodesRef = useRef<d3.Selection<SVGGElement, any, SVGGElement, unknown> | null>(null);
+  const linksRef = useRef<d3.Selection<SVGLineElement, any, SVGGElement, unknown> | null>(null);
+
+  // Update highlighting when search changes
+  useEffect(() => {
+    if (!nodesRef.current || !linksRef.current) return;
+
+    const hasHighlight = highlightedNodeIds.length > 0;
+
+    nodesRef.current
+      .attr('opacity', (d: any) => {
+        if (!hasHighlight) return 1;
+        return highlightedNodeIds.includes(d.id) ? 1 : 0.15;
+      })
+      .select('circle, polygon')
+      .attr('filter', (d: any) => {
+        if (!hasHighlight) return 'none';
+        return highlightedNodeIds.includes(d.id) ? 'url(#glow)' : 'none';
+      });
+
+    linksRef.current
+      .attr('opacity', (d: any) => {
+        if (!hasHighlight) return 0.7;
+        const sourceMatch = highlightedNodeIds.includes(d.source.id || d.source);
+        const targetMatch = highlightedNodeIds.includes(d.target.id || d.target);
+        return (sourceMatch || targetMatch) ? 0.7 : 0.05;
+      });
+
+  }, [highlightedNodeIds]);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
@@ -36,6 +65,23 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
     
     svg.selectAll('*').remove();
 
+    // Add glow filter for highlights
+    const defs = svg.append('defs');
+    const filter = defs.append('filter')
+      .attr('id', 'glow')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+      .attr('width', '200%')
+      .attr('height', '200%');
+    
+    filter.append('feGaussianBlur')
+      .attr('stdDeviation', '4')
+      .attr('result', 'coloredBlur');
+    
+    const feMerge = filter.append('feMerge');
+    feMerge.append('feMergeNode').attr('in', 'coloredBlur');
+    feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
     // Create container group for zoom
     const g = svg.append('g');
 
@@ -48,10 +94,15 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
 
     svg.call(zoom);
 
-    // Center the view initially
+    // Responsive initial zoom
+    const isMobile = width < 768;
+    const initialScale = isMobile ? 0.4 : 0.6;
+    const initialX = isMobile ? width * 0.3 : width / 4;
+    const initialY = isMobile ? height * 0.2 : height / 4;
+
     const initialTransform = d3.zoomIdentity
-      .translate(width / 4, height / 4)
-      .scale(0.6);
+      .translate(initialX, initialY)
+      .scale(initialScale);
     svg.call(zoom.transform, initialTransform);
 
     // Prepare data for simulation
@@ -85,10 +136,8 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       )
       .force('x', d3.forceX(width / 2).strength(0.02))
       .force('y', d3.forceY(height / 2).strength(0.02))
-      .alphaDecay(0.02)  // Slower decay = smoother settling
-      .velocityDecay(0.4);  // Higher = more damping = less jitter
-
-    simulationRef.current = simulation;
+      .alphaDecay(0.02)
+      .velocityDecay(0.4);
 
     // Draw connections
     const link = g.append('g')
@@ -102,6 +151,8 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       .attr('stroke-opacity', 0.7)
       .attr('stroke-dasharray', d => d.type === 'corrupts' ? '5,5' : 'none');
 
+    linksRef.current = link as any;
+
     // Draw nodes
     const node = g.append('g')
       .attr('class', 'nodes')
@@ -111,6 +162,8 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       .append('g')
       .attr('class', 'node')
       .style('cursor', 'pointer');
+
+    nodesRef.current = node as any;
 
     // Node shapes
     node.each(function(d: any) {
@@ -150,7 +203,7 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       }
     });
 
-    // Add invisible larger hit area for easier clicking
+    // Add invisible larger hit area
     node.append('circle')
       .attr('r', (d: any) => d.size * 0.6 + 10)
       .attr('fill', 'transparent')
@@ -183,7 +236,7 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       onNodeClick(d as CognitiveNode);
     });
 
-    // Drag handlers - fixed position during drag
+    // Drag handlers
     node.call(d3.drag<SVGGElement, any>()
       .on('start', function(event, d) {
         if (!event.active) simulation.alphaTarget(0.1).restart();
@@ -212,10 +265,8 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
-    // Let simulation run and settle
     simulation.alpha(1).restart();
 
-    // Stop simulation after settling to prevent ongoing jitter
     setTimeout(() => {
       simulation.alphaTarget(0);
     }, 3000);
