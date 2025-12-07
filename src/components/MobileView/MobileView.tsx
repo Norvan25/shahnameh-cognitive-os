@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CognitiveNode } from '../../types/graph.types';
+import type { CognitiveNode } from '../../types/graph.types';
 import { NodeIcon } from '../Icons/NodeIcon';
 import './MobileView.css';
 
