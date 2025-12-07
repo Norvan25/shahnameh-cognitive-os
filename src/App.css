@@ -108,14 +108,9 @@ html, body, #root {
   background: rgba(102, 211, 250, 0.4);
 }
 
-/* Node styles */
+/* Node styles - NO TRANSFORM ON HOVER */
 .node {
   cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.node:hover {
-  transform: scale(1.1);
 }
 
 .glow-ring {
@@ -125,11 +120,9 @@ html, body, #root {
 @keyframes pulse-glow {
   0%, 100% {
     stroke-opacity: 0.3;
-    r: 55;
   }
   50% {
     stroke-opacity: 0.6;
-    r: 60;
   }
 }
 
