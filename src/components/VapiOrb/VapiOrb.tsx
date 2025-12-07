@@ -3,10 +3,7 @@ import './VapiOrb.css';
 
 declare global {
   interface Window {
-    vapiSDK?: {
-      run: (config: any) => any;
-    };
-    vapiInstance?: any;
+    Vapi?: any;
   }
 }
 
@@ -23,122 +20,119 @@ const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
 export function VapiOrb({ isActive, onToggle }: Props) {
+  const vapiRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [sdkReady, setSdkReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load VAPI SDK and hide default button
+  // Load VAPI Web SDK (correct one for custom UI)
   useEffect(() => {
-    // Add CSS to hide default VAPI button
-    const style = document.createElement('style');
-    style.textContent = `
-      #vapi-support-btn,
-      [id^="vapi"],
-      .vapi-btn,
-      iframe[src*="vapi"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        position: absolute !important;
-        left: -9999px !important;
-      }
-    `;
-    document.head.appendChild(style);
-
-    // Check if already loaded
-    if (window.vapiInstance) {
-      setSdkReady(true);
-      setupListeners(window.vapiInstance);
-      return;
-    }
-
     const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
-    script.defer = true;
+    // Use the WEB SDK, not the HTML widget SDK
+    script.src = 'https://unpkg.com/@vapi-ai/web@latest/dist/vapi.umd.js';
     script.async = true;
 
     script.onload = () => {
-      if (window.vapiSDK) {
+      console.log('VAPI script loaded, window.Vapi:', !!window.Vapi);
+      
+      if (window.Vapi) {
         try {
-          window.vapiInstance = window.vapiSDK.run({
-            apiKey: VAPI_PUBLIC_KEY,
-            assistant: VAPI_ASSISTANT_ID,
-            config: {
-              hide: true,
-              position: 'bottom-left', // Move away from our button
-            },
+          // Create instance with public key
+          vapiRef.current = new window.Vapi(VAPI_PUBLIC_KEY);
+          console.log('VAPI instance created:', !!vapiRef.current);
+          
+          // Setup listeners
+          vapiRef.current.on('call-start', () => {
+            console.log('Call started');
+            setIsConnecting(false);
+            setError(null);
           });
 
-          if (window.vapiInstance) {
-            setupListeners(window.vapiInstance);
-            setSdkReady(true);
-          }
-        } catch (err) {
-          console.error('VAPI init error:', err);
+          vapiRef.current.on('call-end', () => {
+            console.log('Call ended');
+            setIsConnecting(false);
+            setIsSpeaking(false);
+            if (isActive) onToggle();
+          });
+
+          vapiRef.current.on('speech-start', () => {
+            setIsSpeaking(true);
+          });
+
+          vapiRef.current.on('speech-end', () => {
+            setIsSpeaking(false);
+          });
+
+          vapiRef.current.on('volume-level', (level: number) => {
+            setVolumeLevel(level);
+          });
+
+          vapiRef.current.on('error', (err: any) => {
+            console.error('VAPI error:', err);
+            setError(err?.message || 'Connection error');
+            setIsConnecting(false);
+          });
+
+          vapiRef.current.on('message', (msg: any) => {
+            console.log('VAPI message:', msg);
+          });
+
+          setSdkReady(true);
+          setError(null);
+        } catch (err: any) {
+          console.error('Failed to create VAPI instance:', err);
+          setError('Failed to initialize');
         }
+      } else {
+        setError('SDK not found');
       }
+    };
+
+    script.onerror = () => {
+      setError('Failed to load SDK');
     };
 
     document.body.appendChild(script);
 
     return () => {
-      style.remove();
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
+      if (script.parentNode) {
+        script.parentNode.removeChild(script);
+      }
     };
   }, []);
 
-  const setupListeners = (vapi: any) => {
-    vapi.on('call-start', () => {
-      setIsConnecting(false);
-      // Sync our state with VAPI
-      if (!isActive) onToggle();
-    });
-
-    vapi.on('call-end', () => {
-      setIsConnecting(false);
-      setIsSpeaking(false);
-      // Sync our state with VAPI
-      if (isActive) onToggle();
-    });
-
-    vapi.on('speech-start', () => {
-      setIsSpeaking(true);
-    });
-
-    vapi.on('speech-end', () => {
-      setIsSpeaking(false);
-    });
-
-    vapi.on('volume-level', (level: number) => {
-      setVolumeLevel(level);
-    });
-
-    vapi.on('error', (error: any) => {
-      console.error('VAPI Error:', error);
-      setIsConnecting(false);
-    });
-  };
-
   const handleToggle = async () => {
-    if (!window.vapiInstance) {
-      console.error('VAPI not ready');
+    console.log('Button clicked, sdkReady:', sdkReady, 'vapiRef:', !!vapiRef.current);
+    
+    if (!vapiRef.current) {
+      setError('SDK not ready');
       return;
     }
 
     if (isActive) {
-      window.vapiInstance.stop();
+      console.log('Stopping call...');
+      vapiRef.current.stop();
       onToggle();
     } else {
+      console.log('Starting call with assistant:', VAPI_ASSISTANT_ID);
       setIsConnecting(true);
+      setError(null);
       onToggle();
       
       try {
-        await window.vapiInstance.start();
-      } catch (error) {
-        console.error('Start error:', error);
+        // Start call with assistant ID
+        await vapiRef.current.start(VAPI_ASSISTANT_ID);
+        console.log('Call start initiated');
+      } catch (err: any) {
+        console.error('Failed to start:', err);
+        setError(err?.message || 'Failed to start');
         setIsConnecting(false);
         onToggle();
       }
@@ -210,6 +204,24 @@ export function VapiOrb({ isActive, onToggle }: Props) {
           <div className={`pulse-ring ${isSpeaking ? 'speaking' : ''}`} />
         )}
       </button>
+
+      {/* Status/Error display */}
+      {error && (
+        <div style={{
+          position: 'fixed',
+          bottom: '96px',
+          right: '24px',
+          background: 'rgba(230, 57, 70, 0.9)',
+          color: 'white',
+          padding: '6px 12px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          fontFamily: 'Poppins, sans-serif',
+          zIndex: 101,
+        }}>
+          {error}
+        </div>
+      )}
 
       {isActive && (
         <div className="waveform-container">
