@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
-import Vapi from '@vapi-ai/web';
+import { useEffect } from 'react';
 import './VapiOrb.css';
 
-interface Props {
-  isActive: boolean;
-  onToggle: () => void;
+declare global {
+  interface Window {
+    vapiSDK?: {
+      run: (config: any) => any;
+    };
+    vapiInstance?: any;
+  }
 }
 
 // =====================================================
@@ -14,189 +17,121 @@ const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
-export function VapiOrb({ isActive, onToggle }: Props) {
-  const vapiRef = useRef<Vapi | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number | undefined>(undefined);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [volumeLevel, setVolumeLevel] = useState(0);
-  const [sdkReady, setSdkReady] = useState(false);
-  const [status, setStatus] = useState('Initializing...');
-
-  // Initialize VAPI
+export function VapiOrb() {
   useEffect(() => {
-    try {
-      vapiRef.current = new Vapi(VAPI_PUBLIC_KEY);
+    // Add custom styles to override VAPI button appearance
+    const style = document.createElement('style');
+    style.id = 'vapi-custom-styles';
+    style.textContent = `
+      /* Override VAPI button styles */
+      #vapi-support-btn,
+      .vapi-btn,
+      [data-vapi-btn] {
+        width: 64px !important;
+        height: 64px !important;
+        border-radius: 50% !important;
+        background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%) !important;
+        border: none !important;
+        cursor: pointer !important;
+        box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
+        transition: all 0.3s ease !important;
+        bottom: 24px !important;
+        right: 24px !important;
+        position: fixed !important;
+        z-index: 100 !important;
+      }
 
-      vapiRef.current.on('call-start', () => {
-        setStatus('Connected');
-        setIsConnecting(false);
-      });
+      #vapi-support-btn:hover,
+      .vapi-btn:hover,
+      [data-vapi-btn]:hover {
+        transform: scale(1.05) !important;
+        box-shadow: 0 6px 30px rgba(102, 211, 250, 0.5) !important;
+      }
 
-      vapiRef.current.on('call-end', () => {
-        setStatus('Ready');
-        setIsConnecting(false);
-        setIsSpeaking(false);
-        if (isActive) onToggle();
-      });
+      /* When call is active - green gradient */
+      #vapi-support-btn.vapi-btn-is-active,
+      .vapi-btn.vapi-btn-is-active,
+      [data-vapi-btn].vapi-btn-is-active,
+      #vapi-support-btn[data-active="true"],
+      .vapi-btn[data-active="true"] {
+        background: linear-gradient(135deg, #009E60 0%, #007ACC 100%) !important;
+        box-shadow: 0 4px 20px rgba(0, 158, 96, 0.4) !important;
+      }
 
-      vapiRef.current.on('speech-start', () => {
-        setIsSpeaking(true);
-        setStatus('Speaking...');
-      });
+      /* Style the icon inside */
+      #vapi-support-btn svg,
+      .vapi-btn svg,
+      [data-vapi-btn] svg {
+        width: 32px !important;
+        height: 32px !important;
+        color: white !important;
+        fill: white !important;
+      }
 
-      vapiRef.current.on('speech-end', () => {
-        setIsSpeaking(false);
-        setStatus('Listening...');
-      });
+      #vapi-support-btn img,
+      .vapi-btn img,
+      [data-vapi-btn] img {
+        width: 32px !important;
+        height: 32px !important;
+        filter: brightness(0) invert(1) !important;
+      }
 
-      vapiRef.current.on('volume-level', (level: number) => {
-        setVolumeLevel(level);
-      });
+      /* Hide any default VAPI branding/text */
+      #vapi-support-btn span,
+      .vapi-btn span {
+        display: none !important;
+      }
 
-      vapiRef.current.on('error', (err: any) => {
-        console.error('VAPI Error:', err);
-        setStatus('Error');
-        setIsConnecting(false);
-      });
+      /* Mobile responsive */
+      @media (max-width: 768px) {
+        #vapi-support-btn,
+        .vapi-btn,
+        [data-vapi-btn] {
+          width: 56px !important;
+          height: 56px !important;
+          bottom: 16px !important;
+          right: 16px !important;
+        }
 
-      setSdkReady(true);
-      setStatus('Ready');
-    } catch (err) {
-      console.error('Failed to initialize VAPI:', err);
-      setStatus('Init failed');
-    }
+        #vapi-support-btn svg,
+        .vapi-btn svg,
+        #vapi-support-btn img,
+        .vapi-btn img {
+          width: 28px !important;
+          height: 28px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Load VAPI widget SDK
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
+    script.defer = true;
+    script.async = true;
+
+    script.onload = () => {
+      if (window.vapiSDK) {
+        window.vapiInstance = window.vapiSDK.run({
+          apiKey: VAPI_PUBLIC_KEY,
+          assistant: VAPI_ASSISTANT_ID,
+          config: {
+            position: 'bottom-right',
+            offset: '24px',
+          },
+        });
+      }
+    };
+
+    document.body.appendChild(script);
 
     return () => {
-      if (vapiRef.current) {
-        vapiRef.current.stop();
-      }
+      const styleEl = document.getElementById('vapi-custom-styles');
+      if (styleEl) styleEl.remove();
+      if (script.parentNode) script.parentNode.removeChild(script);
     };
   }, []);
 
-  const handleToggle = async () => {
-    if (!vapiRef.current) {
-      setStatus('Not ready');
-      return;
-    }
-
-    if (isActive) {
-      vapiRef.current.stop();
-      onToggle();
-      setStatus('Ready');
-    } else {
-      setIsConnecting(true);
-      setStatus('Connecting...');
-      onToggle();
-
-      try {
-        await vapiRef.current.start({
-          assistantId: VAPI_ASSISTANT_ID
-        });
-      } catch (err: any) {
-        console.error('Start error:', err);
-        setStatus('Failed');
-        setIsConnecting(false);
-        onToggle();
-      }
-    }
-  };
-
-  // Waveform animation
-  useEffect(() => {
-    if (!isActive || !canvasRef.current) {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.beginPath();
-      ctx.strokeStyle = isSpeaking ? '#66D3FA' : '#009E60';
-      ctx.lineWidth = 2;
-
-      const time = Date.now() / 1000;
-      const amp = isSpeaking ? 15 + volumeLevel * 30 : 8;
-
-      for (let x = 0; x < canvas.width; x++) {
-        const y = canvas.height / 2 +
-          Math.sin(x * 0.05 + time * 3) * amp +
-          Math.sin(x * 0.02 + time * 2) * amp * 0.6;
-        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      }
-
-      ctx.stroke();
-      animationRef.current = requestAnimationFrame(draw);
-    };
-
-    draw();
-    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
-  }, [isActive, isSpeaking, volumeLevel]);
-
-  return (
-    <>
-      <button
-        className={`vapi-orb ${isActive ? 'active' : ''} ${isConnecting ? 'connecting' : ''} ${isSpeaking ? 'speaking' : ''}`}
-        onClick={handleToggle}
-        aria-label="Toggle voice assistant"
-        disabled={isConnecting || !sdkReady}
-        style={{ opacity: sdkReady ? 1 : 0.5 }}
-      >
-        <div className="orb-inner">
-          {isConnecting ? (
-            <div className="connecting-spinner" />
-          ) : isActive ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="6" y="4" width="4" height="16" rx="1" />
-              <rect x="14" y="4" width="4" height="16" rx="1" />
-            </svg>
-          ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-              <line x1="12" y1="19" x2="12" y2="23" />
-              <line x1="8" y1="23" x2="16" y2="23" />
-            </svg>
-          )}
-        </div>
-        {isActive && !isConnecting && (
-          <div className={`pulse-ring ${isSpeaking ? 'speaking' : ''}`} />
-        )}
-      </button>
-
-      {/* Status badge */}
-      <div style={{
-        position: 'fixed',
-        bottom: '96px',
-        right: '24px',
-        background: status.includes('Error') || status.includes('Failed') || status.includes('failed')
-          ? 'rgba(230, 57, 70, 0.9)'
-          : status === 'Ready'
-            ? 'rgba(0, 158, 96, 0.9)'
-            : 'rgba(0, 0, 0, 0.7)',
-        color: 'white',
-        padding: '6px 12px',
-        borderRadius: '8px',
-        fontSize: '11px',
-        fontFamily: 'Poppins, sans-serif',
-        zIndex: 101,
-      }}>
-        {status}
-      </div>
-
-      {isActive && (
-        <div className="waveform-container">
-          <canvas ref={canvasRef} width={400} height={60} className="waveform-canvas" />
-          <p className="listening-text">
-            {isConnecting ? 'Connecting...' : isSpeaking ? 'Speaking...' : 'Listening...'}
-          </p>
-        </div>
-      )}
-    </>
-  );
+  // No custom button - VAPI creates its own, we just style it
+  return null;
 }
