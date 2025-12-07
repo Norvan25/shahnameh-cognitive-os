@@ -8,7 +8,6 @@ import './App.css';
 
 function App() {
   const [selectedNode, setSelectedNode] = useState<CognitiveNode | null>(null);
-  const [isVapiActive, setIsVapiActive] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleNodeClick = (node: CognitiveNode) => {
@@ -107,10 +106,8 @@ function App() {
         onClose={handleClosePanel}
       />
 
-      <VapiOrb 
-        isActive={isVapiActive}
-        onToggle={() => setIsVapiActive(!isVapiActive)}
-      />
+      {/* VAPI button - styled to match our design */}
+      <VapiOrb />
     </div>
   );
 }
