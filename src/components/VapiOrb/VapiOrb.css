@@ -1,190 +1,157 @@
-.vapi-orb {
+/* Active Call HUD */
+.vapi-hud {
   position: fixed;
-  bottom: 24px;
+  bottom: 100px;
   right: 24px;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%);
-  border: none;
-  cursor: pointer;
+  background: linear-gradient(135deg, rgba(13, 19, 38, 0.95) 0%, rgba(19, 34, 56, 0.95) 100%);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(102, 211, 250, 0.2);
+  padding: 16px;
+  z-index: 99;
+  animation: hudSlideIn 0.3s ease-out;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(102, 211, 250, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  min-width: 200px;
+}
+
+@keyframes hudSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.vapi-hud-header {
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4);
-  transition: all 0.3s ease;
-  z-index: 100;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(102, 211, 250, 0.1);
 }
 
-.vapi-orb:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 30px rgba(102, 211, 250, 0.5);
+.vapi-hud-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.vapi-orb:active {
-  transform: scale(0.95);
+.vapi-hud-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00D9FF;
+  animation: dotPulse 1.5s ease-in-out infinite;
+  box-shadow: 0 0 8px #00D9FF;
 }
 
-.vapi-orb:disabled {
-  cursor: wait;
-  opacity: 0.8;
-}
-
-.vapi-orb.active {
-  background: linear-gradient(135deg, #009E60 0%, #007ACC 100%);
-  box-shadow: 0 4px 20px rgba(0, 158, 96, 0.4);
-}
-
-.vapi-orb.connecting {
-  background: linear-gradient(135deg, #F2AA4C 0%, #E63946 100%);
-  animation: pulse-connecting 1s ease-in-out infinite;
-}
-
-.vapi-orb.speaking {
-  box-shadow: 0 4px 30px rgba(102, 211, 250, 0.6);
-}
-
-@keyframes pulse-connecting {
+@keyframes dotPulse {
   0%, 100% {
+    opacity: 1;
     transform: scale(1);
-    opacity: 0.8;
   }
   50% {
-    transform: scale(1.05);
-    opacity: 1;
+    opacity: 0.6;
+    transform: scale(0.85);
   }
 }
 
-.orb-inner {
-  width: 32px;
-  height: 32px;
-  color: #FFFFFF;
+.vapi-hud-status {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.3px;
 }
 
-.orb-inner svg {
+.vapi-hud-icon {
+  width: 24px;
+  height: 24px;
+  color: #66D3FA;
+  animation: iconFloat 2s ease-in-out infinite;
+}
+
+.vapi-hud-icon svg {
   width: 100%;
   height: 100%;
 }
 
-.connecting-spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  border-top-color: #FFFFFF;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.pulse-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80px;
-  height: 80px;
-  border: 2px solid rgba(102, 211, 250, 0.5);
-  border-radius: 50%;
-  animation: pulse-ring 2s ease-out infinite;
-  pointer-events: none;
-}
-
-.pulse-ring.speaking {
-  border-color: rgba(102, 211, 250, 0.8);
-  animation: pulse-ring-fast 0.8s ease-out infinite;
-}
-
-@keyframes pulse-ring {
-  0% {
-    width: 64px;
-    height: 64px;
-    opacity: 0.6;
-  }
-  100% {
-    width: 100px;
-    height: 100px;
-    opacity: 0;
-  }
-}
-
-@keyframes pulse-ring-fast {
-  0% {
-    width: 64px;
-    height: 64px;
-    opacity: 0.8;
-  }
-  100% {
-    width: 90px;
-    height: 90px;
-    opacity: 0;
-  }
-}
-
-.waveform-container {
-  position: fixed;
-  bottom: 100px;
-  right: 24px;
-  background: rgba(13, 19, 38, 0.95);
-  backdrop-filter: blur(10px);
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(102, 211, 250, 0.2);
-  z-index: 99;
-  animation: slideUp 0.2s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
+@keyframes iconFloat {
+  0%, 100% {
     transform: translateY(0);
   }
+  50% {
+    transform: translateY(-2px);
+  }
 }
 
-.waveform-canvas {
+.vapi-hud-wave {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.vapi-wave-canvas {
   display: block;
-  width: 200px;
-  height: 40px;
+  width: 100%;
+  height: 50px;
 }
 
-.listening-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  margin: 8px 0 0 0;
+/* Glow effect around HUD when speaking */
+.vapi-hud::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(102, 211, 250, 0.3), transparent, rgba(0, 158, 96, 0.3));
+  z-index: -1;
+  opacity: 0;
+  animation: hudGlow 2s ease-in-out infinite;
 }
 
-/* Mobile Responsive */
+@keyframes hudGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Mobile responsive */
 @media (max-width: 768px) {
-  .vapi-orb {
-    bottom: 16px;
+  .vapi-hud {
+    bottom: 88px;
     right: 16px;
-    width: 56px;
-    height: 56px;
+    left: 16px;
+    min-width: auto;
   }
 
-  .orb-inner {
-    width: 28px;
-    height: 28px;
+  .vapi-wave-canvas {
+    width: 100%;
   }
+}
 
-  .waveform-container {
-    bottom: 84px;
-    right: 16px;
-    padding: 12px;
-  }
-
-  .waveform-canvas {
-    width: 160px;
-    height: 30px;
-  }
+/* Decorative corner accents */
+.vapi-hud::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-top: 2px solid rgba(102, 211, 250, 0.3);
+  border-right: 2px solid rgba(102, 211, 250, 0.3);
+  border-radius: 0 8px 0 0;
 }
