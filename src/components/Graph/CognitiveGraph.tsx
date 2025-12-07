@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { GraphData, CognitiveNode, RelationshipType } from '../../types/graph.types';
+import type { GraphData, CognitiveNode, RelationshipType } from '../../types/graph.types';
 
 interface Props {
   data: GraphData;
