@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import './VapiOrb.css';
-
+console.log('🔴 VAPI ORB FILE LOADED');
 declare global {
   interface Window {
     vapiSDK?: any;
