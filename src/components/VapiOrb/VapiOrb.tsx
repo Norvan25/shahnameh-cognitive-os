@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import Vapi from '@vapi-ai/web';
 import './VapiOrb.css';
-
-declare global {
-  interface Window {
-    Vapi?: any;
-  }
-}
 
 interface Props {
   isActive: boolean;
@@ -19,108 +14,64 @@ const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
-// Multiple CDN options to try
-const CDN_URLS = [
-  'https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.umd.js',
-  'https://unpkg.com/@vapi-ai/web/dist/vapi.umd.js',
-  'https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.3/dist/vapi.umd.js',
-];
-
 export function VapiOrb({ isActive, onToggle }: Props) {
-  const vapiRef = useRef<any>(null);
+  const vapiRef = useRef<Vapi | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [sdkReady, setSdkReady] = useState(false);
-  const [status, setStatus] = useState('Loading...');
+  const [status, setStatus] = useState('Initializing...');
 
-  // Try loading SDK from multiple CDNs
+  // Initialize VAPI
   useEffect(() => {
-    let currentUrlIndex = 0;
-    let script: HTMLScriptElement | null = null;
+    try {
+      vapiRef.current = new Vapi(VAPI_PUBLIC_KEY);
 
-    const tryLoadScript = () => {
-      if (currentUrlIndex >= CDN_URLS.length) {
-        setStatus('All CDNs failed');
-        return;
-      }
+      vapiRef.current.on('call-start', () => {
+        setStatus('Connected');
+        setIsConnecting(false);
+      });
 
-      const url = CDN_URLS[currentUrlIndex];
-      console.log(`Trying CDN ${currentUrlIndex + 1}:`, url);
-      setStatus(`Loading (${currentUrlIndex + 1}/${CDN_URLS.length})...`);
+      vapiRef.current.on('call-end', () => {
+        setStatus('Ready');
+        setIsConnecting(false);
+        setIsSpeaking(false);
+        if (isActive) onToggle();
+      });
 
-      script = document.createElement('script');
-      script.src = url;
-      script.async = true;
+      vapiRef.current.on('speech-start', () => {
+        setIsSpeaking(true);
+        setStatus('Speaking...');
+      });
 
-      script.onload = () => {
-        console.log('Script loaded, checking window.Vapi...');
-        
-        if (window.Vapi) {
-          try {
-            vapiRef.current = new window.Vapi(VAPI_PUBLIC_KEY);
-            
-            vapiRef.current.on('call-start', () => {
-              setStatus('Connected');
-              setIsConnecting(false);
-            });
+      vapiRef.current.on('speech-end', () => {
+        setIsSpeaking(false);
+        setStatus('Listening...');
+      });
 
-            vapiRef.current.on('call-end', () => {
-              setStatus('Ready');
-              setIsConnecting(false);
-              setIsSpeaking(false);
-              if (isActive) onToggle();
-            });
+      vapiRef.current.on('volume-level', (level: number) => {
+        setVolumeLevel(level);
+      });
 
-            vapiRef.current.on('speech-start', () => {
-              setIsSpeaking(true);
-              setStatus('Speaking...');
-            });
-            
-            vapiRef.current.on('speech-end', () => {
-              setIsSpeaking(false);
-              setStatus('Listening...');
-            });
-            
-            vapiRef.current.on('volume-level', (level: number) => setVolumeLevel(level));
-            
-            vapiRef.current.on('error', (err: any) => {
-              console.error('VAPI Error:', err);
-              setStatus('Error: ' + (err?.message || 'Unknown'));
-              setIsConnecting(false);
-            });
+      vapiRef.current.on('error', (err: any) => {
+        console.error('VAPI Error:', err);
+        setStatus('Error');
+        setIsConnecting(false);
+      });
 
-            setSdkReady(true);
-            setStatus('Ready');
-            console.log('VAPI initialized successfully!');
-          } catch (err: any) {
-            console.error('Init error:', err);
-            setStatus('Init error');
-          }
-        } else {
-          console.log('window.Vapi not found, trying next CDN...');
-          currentUrlIndex++;
-          tryLoadScript();
-        }
-      };
-
-      script.onerror = () => {
-        console.log(`CDN ${currentUrlIndex + 1} failed, trying next...`);
-        if (script?.parentNode) script.parentNode.removeChild(script);
-        currentUrlIndex++;
-        tryLoadScript();
-      };
-
-      document.body.appendChild(script);
-    };
-
-    tryLoadScript();
+      setSdkReady(true);
+      setStatus('Ready');
+    } catch (err) {
+      console.error('Failed to initialize VAPI:', err);
+      setStatus('Init failed');
+    }
 
     return () => {
-      if (vapiRef.current) vapiRef.current.stop();
-      if (script?.parentNode) script.parentNode.removeChild(script);
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
     };
   }, []);
 
@@ -138,14 +89,14 @@ export function VapiOrb({ isActive, onToggle }: Props) {
       setIsConnecting(true);
       setStatus('Connecting...');
       onToggle();
-      
+
       try {
         await vapiRef.current.start({
           assistantId: VAPI_ASSISTANT_ID
         });
       } catch (err: any) {
         console.error('Start error:', err);
-        setStatus('Failed: ' + (err?.message || 'Unknown'));
+        setStatus('Failed');
         setIsConnecting(false);
         onToggle();
       }
@@ -223,9 +174,9 @@ export function VapiOrb({ isActive, onToggle }: Props) {
         position: 'fixed',
         bottom: '96px',
         right: '24px',
-        background: status.includes('Error') || status.includes('Failed') || status.includes('failed') 
-          ? 'rgba(230, 57, 70, 0.9)' 
-          : status === 'Ready' 
+        background: status.includes('Error') || status.includes('Failed') || status.includes('failed')
+          ? 'rgba(230, 57, 70, 0.9)'
+          : status === 'Ready'
             ? 'rgba(0, 158, 96, 0.9)'
             : 'rgba(0, 0, 0, 0.7)',
         color: 'white',
