@@ -1,0 +1,99 @@
+.vapi-orb {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 200;
+}
+
+.vapi-orb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 30px rgba(102, 211, 250, 0.5);
+}
+
+.vapi-orb.active {
+  animation: orbPulse 2s ease-in-out infinite;
+}
+
+@keyframes orbPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4); }
+  50% { box-shadow: 0 4px 40px rgba(102, 211, 250, 0.7); }
+}
+
+.orb-inner {
+  width: 28px;
+  height: 28px;
+  color: #0D1326;
+}
+
+.orb-inner svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pulse-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid #66D3FA;
+  animation: pulseExpand 1.5s ease-out infinite;
+}
+
+@keyframes pulseExpand {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.waveform-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(13, 19, 38, 0.95));
+  padding: 24px;
+  padding-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: slideUp 0.3s ease;
+  z-index: 150;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.waveform-canvas {
+  max-width: 100%;
+}
+
+.listening-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 12px;
+}

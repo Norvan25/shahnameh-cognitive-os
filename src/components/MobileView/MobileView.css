@@ -1,0 +1,170 @@
+.mobile-view {
+  min-height: 100vh;
+  background: #0D1326;
+  padding-bottom: 100px;
+}
+
+.mobile-header {
+  padding: 24px 20px;
+  text-align: center;
+  background: linear-gradient(to bottom, #132238, transparent);
+}
+
+.mobile-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.mobile-subtitle {
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 4px 0 0 0;
+}
+
+.search-container {
+  padding: 0 16px 16px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 14px 16px;
+  background: #132238;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #66D3FA;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-tab.active {
+  background: #66D3FA;
+  border-color: #66D3FA;
+  color: #0D1326;
+}
+
+.nodes-list {
+  padding: 0 16px;
+}
+
+.level-group {
+  margin-bottom: 24px;
+}
+
+.level-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 12px 4px;
+}
+
+.node-card {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #132238;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.node-card:active {
+  transform: scale(0.98);
+  background: #1a2d45;
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-names {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.card-name-en {
+  font-family: 'Poppins', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.card-name-fa {
+  font-family: 'Vazirmatn', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.card-role {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-arrow {
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
