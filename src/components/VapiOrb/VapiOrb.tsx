@@ -29,14 +29,30 @@ export function VapiOrb({ isActive, onToggle }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [sdkReady, setSdkReady] = useState(false);
-  const [status, setStatus] = useState('Loading...');
 
-  // Load VAPI SDK using official method
+  // Load VAPI SDK and hide default button
   useEffect(() => {
+    // Add CSS to hide default VAPI button
+    const style = document.createElement('style');
+    style.textContent = `
+      #vapi-support-btn,
+      [id^="vapi"],
+      .vapi-btn,
+      iframe[src*="vapi"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
+      }
+    `;
+    document.head.appendChild(style);
+
     // Check if already loaded
     if (window.vapiInstance) {
       setSdkReady(true);
-      setStatus('Ready ✓');
+      setupListeners(window.vapiInstance);
       return;
     }
 
@@ -52,90 +68,77 @@ export function VapiOrb({ isActive, onToggle }: Props) {
             apiKey: VAPI_PUBLIC_KEY,
             assistant: VAPI_ASSISTANT_ID,
             config: {
-              hide: true, // Hide default button, we use our own
-              position: 'bottom-right',
+              hide: true,
+              position: 'bottom-left', // Move away from our button
             },
           });
 
-          // Setup event listeners
           if (window.vapiInstance) {
-            window.vapiInstance.on('call-start', () => {
-              setStatus('Call Active');
-              setIsConnecting(false);
-            });
-
-            window.vapiInstance.on('call-end', () => {
-              setStatus('Ready ✓');
-              setIsConnecting(false);
-              setIsSpeaking(false);
-              if (isActive) onToggle();
-            });
-
-            window.vapiInstance.on('speech-start', () => {
-              setIsSpeaking(true);
-              setStatus('Speaking...');
-            });
-
-            window.vapiInstance.on('speech-end', () => {
-              setIsSpeaking(false);
-              setStatus('Listening...');
-            });
-
-            window.vapiInstance.on('volume-level', (level: number) => {
-              setVolumeLevel(level);
-            });
-
-            window.vapiInstance.on('error', (error: any) => {
-              console.error('VAPI Error:', error);
-              setStatus('Error');
-              setIsConnecting(false);
-            });
-
+            setupListeners(window.vapiInstance);
             setSdkReady(true);
-            setStatus('Ready ✓');
           }
-        } catch (err: any) {
-          setStatus('Init Error');
+        } catch (err) {
           console.error('VAPI init error:', err);
         }
-      } else {
-        setStatus('SDK Missing');
       }
-    };
-
-    script.onerror = () => {
-      setStatus('Load Failed');
     };
 
     document.body.appendChild(script);
 
     return () => {
-      // Cleanup
+      style.remove();
     };
   }, []);
 
+  const setupListeners = (vapi: any) => {
+    vapi.on('call-start', () => {
+      setIsConnecting(false);
+      // Sync our state with VAPI
+      if (!isActive) onToggle();
+    });
+
+    vapi.on('call-end', () => {
+      setIsConnecting(false);
+      setIsSpeaking(false);
+      // Sync our state with VAPI
+      if (isActive) onToggle();
+    });
+
+    vapi.on('speech-start', () => {
+      setIsSpeaking(true);
+    });
+
+    vapi.on('speech-end', () => {
+      setIsSpeaking(false);
+    });
+
+    vapi.on('volume-level', (level: number) => {
+      setVolumeLevel(level);
+    });
+
+    vapi.on('error', (error: any) => {
+      console.error('VAPI Error:', error);
+      setIsConnecting(false);
+    });
+  };
+
   const handleToggle = async () => {
     if (!window.vapiInstance) {
-      alert('VAPI not ready. Status: ' + status);
+      console.error('VAPI not ready');
       return;
     }
 
     if (isActive) {
-      // Stop call
       window.vapiInstance.stop();
       onToggle();
-      setStatus('Ready ✓');
     } else {
-      // Start call
       setIsConnecting(true);
-      setStatus('Connecting...');
       onToggle();
-
+      
       try {
         await window.vapiInstance.start();
-      } catch (error: any) {
+      } catch (error) {
         console.error('Start error:', error);
-        setStatus('Start Failed');
         setIsConnecting(false);
         onToggle();
       }
@@ -184,6 +187,7 @@ export function VapiOrb({ isActive, onToggle }: Props) {
         onClick={handleToggle}
         aria-label="Toggle voice assistant"
         disabled={isConnecting || !sdkReady}
+        style={{ opacity: sdkReady ? 1 : 0.5 }}
       >
         <div className="orb-inner">
           {isConnecting ? (
@@ -206,22 +210,6 @@ export function VapiOrb({ isActive, onToggle }: Props) {
           <div className={`pulse-ring ${isSpeaking ? 'speaking' : ''}`} />
         )}
       </button>
-
-      {/* Status indicator */}
-      <div style={{
-        position: 'fixed',
-        bottom: '96px',
-        right: '24px',
-        background: 'rgba(0,0,0,0.7)',
-        color: status.includes('Error') || status.includes('Failed') ? '#ff6b6b' : '#66D3FA',
-        padding: '4px 10px',
-        borderRadius: '12px',
-        fontSize: '11px',
-        fontFamily: 'Poppins, sans-serif',
-        zIndex: 101,
-      }}>
-        {status}
-      </div>
 
       {isActive && (
         <div className="waveform-container">
