@@ -15,7 +15,7 @@ interface Props {
 // =====================================================
 // YOUR VAPI CREDENTIALS
 // =====================================================
-const VAPI_PUBLIC_KEY = '66c0ce2f-9976-4555-9cb0-df2b11c36778';
+const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
