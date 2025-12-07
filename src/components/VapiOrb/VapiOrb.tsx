@@ -8,7 +8,7 @@ interface Props {
 
 export function VapiOrb({ isActive, onToggle }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (!isActive || !canvasRef.current) return;
