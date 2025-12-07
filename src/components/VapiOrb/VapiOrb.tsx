@@ -19,6 +19,13 @@ const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
+// Multiple CDN options to try
+const CDN_URLS = [
+  'https://cdn.jsdelivr.net/npm/@vapi-ai/web/dist/vapi.umd.js',
+  'https://unpkg.com/@vapi-ai/web/dist/vapi.umd.js',
+  'https://cdn.jsdelivr.net/npm/@vapi-ai/web@2.2.3/dist/vapi.umd.js',
+];
+
 export function VapiOrb({ isActive, onToggle }: Props) {
   const vapiRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,78 +34,118 @@ export function VapiOrb({ isActive, onToggle }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [sdkReady, setSdkReady] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState('Loading...');
 
-  // Load VAPI Web SDK
+  // Try loading SDK from multiple CDNs
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://unpkg.com/@vapi-ai/web@latest/dist/vapi.umd.js';
-    script.async = true;
+    let currentUrlIndex = 0;
+    let script: HTMLScriptElement | null = null;
 
-    script.onload = () => {
-      if (window.Vapi) {
-        try {
-          vapiRef.current = new window.Vapi(VAPI_PUBLIC_KEY);
-          
-          vapiRef.current.on('call-start', () => {
-            setIsConnecting(false);
-            setError(null);
-          });
-
-          vapiRef.current.on('call-end', () => {
-            setIsConnecting(false);
-            setIsSpeaking(false);
-            if (isActive) onToggle();
-          });
-
-          vapiRef.current.on('speech-start', () => setIsSpeaking(true));
-          vapiRef.current.on('speech-end', () => setIsSpeaking(false));
-          vapiRef.current.on('volume-level', (level: number) => setVolumeLevel(level));
-          
-          vapiRef.current.on('error', (err: any) => {
-            console.error('VAPI Error:', err);
-            setError(err?.message || 'Error');
-            setIsConnecting(false);
-          });
-
-          setSdkReady(true);
-        } catch (err: any) {
-          setError('Init failed');
-        }
+    const tryLoadScript = () => {
+      if (currentUrlIndex >= CDN_URLS.length) {
+        setStatus('All CDNs failed');
+        return;
       }
+
+      const url = CDN_URLS[currentUrlIndex];
+      console.log(`Trying CDN ${currentUrlIndex + 1}:`, url);
+      setStatus(`Loading (${currentUrlIndex + 1}/${CDN_URLS.length})...`);
+
+      script = document.createElement('script');
+      script.src = url;
+      script.async = true;
+
+      script.onload = () => {
+        console.log('Script loaded, checking window.Vapi...');
+        
+        if (window.Vapi) {
+          try {
+            vapiRef.current = new window.Vapi(VAPI_PUBLIC_KEY);
+            
+            vapiRef.current.on('call-start', () => {
+              setStatus('Connected');
+              setIsConnecting(false);
+            });
+
+            vapiRef.current.on('call-end', () => {
+              setStatus('Ready');
+              setIsConnecting(false);
+              setIsSpeaking(false);
+              if (isActive) onToggle();
+            });
+
+            vapiRef.current.on('speech-start', () => {
+              setIsSpeaking(true);
+              setStatus('Speaking...');
+            });
+            
+            vapiRef.current.on('speech-end', () => {
+              setIsSpeaking(false);
+              setStatus('Listening...');
+            });
+            
+            vapiRef.current.on('volume-level', (level: number) => setVolumeLevel(level));
+            
+            vapiRef.current.on('error', (err: any) => {
+              console.error('VAPI Error:', err);
+              setStatus('Error: ' + (err?.message || 'Unknown'));
+              setIsConnecting(false);
+            });
+
+            setSdkReady(true);
+            setStatus('Ready');
+            console.log('VAPI initialized successfully!');
+          } catch (err: any) {
+            console.error('Init error:', err);
+            setStatus('Init error');
+          }
+        } else {
+          console.log('window.Vapi not found, trying next CDN...');
+          currentUrlIndex++;
+          tryLoadScript();
+        }
+      };
+
+      script.onerror = () => {
+        console.log(`CDN ${currentUrlIndex + 1} failed, trying next...`);
+        if (script?.parentNode) script.parentNode.removeChild(script);
+        currentUrlIndex++;
+        tryLoadScript();
+      };
+
+      document.body.appendChild(script);
     };
 
-    script.onerror = () => setError('Load failed');
-    document.body.appendChild(script);
+    tryLoadScript();
 
     return () => {
       if (vapiRef.current) vapiRef.current.stop();
-      if (script.parentNode) script.parentNode.removeChild(script);
+      if (script?.parentNode) script.parentNode.removeChild(script);
     };
   }, []);
 
   const handleToggle = async () => {
     if (!vapiRef.current) {
-      setError('Not ready');
+      setStatus('Not ready');
       return;
     }
 
     if (isActive) {
       vapiRef.current.stop();
       onToggle();
+      setStatus('Ready');
     } else {
       setIsConnecting(true);
-      setError(null);
+      setStatus('Connecting...');
       onToggle();
       
       try {
-        // FIXED: Pass object with assistantId, not just string
         await vapiRef.current.start({
           assistantId: VAPI_ASSISTANT_ID
         });
       } catch (err: any) {
         console.error('Start error:', err);
-        setError(err?.message || 'Start failed');
+        setStatus('Failed: ' + (err?.message || 'Unknown'));
         setIsConnecting(false);
         onToggle();
       }
@@ -171,21 +218,25 @@ export function VapiOrb({ isActive, onToggle }: Props) {
         )}
       </button>
 
-      {error && (
-        <div style={{
-          position: 'fixed',
-          bottom: '96px',
-          right: '24px',
-          background: 'rgba(230, 57, 70, 0.9)',
-          color: 'white',
-          padding: '6px 12px',
-          borderRadius: '8px',
-          fontSize: '12px',
-          zIndex: 101,
-        }}>
-          {error}
-        </div>
-      )}
+      {/* Status badge */}
+      <div style={{
+        position: 'fixed',
+        bottom: '96px',
+        right: '24px',
+        background: status.includes('Error') || status.includes('Failed') || status.includes('failed') 
+          ? 'rgba(230, 57, 70, 0.9)' 
+          : status === 'Ready' 
+            ? 'rgba(0, 158, 96, 0.9)'
+            : 'rgba(0, 0, 0, 0.7)',
+        color: 'white',
+        padding: '6px 12px',
+        borderRadius: '8px',
+        fontSize: '11px',
+        fontFamily: 'Poppins, sans-serif',
+        zIndex: 101,
+      }}>
+        {status}
+      </div>
 
       {isActive && (
         <div className="waveform-container">
