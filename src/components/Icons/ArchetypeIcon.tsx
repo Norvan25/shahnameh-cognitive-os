@@ -1,168 +1,525 @@
-interface Props {
-  archetype: string;
-  color: string;
-  size?: number;
-}
+import type { GraphData } from '../types/graph.types';
 
-export function ArchetypeIcon({ archetype, color, size = 40 }: Props) {
-  const icons: Record<string, JSX.Element> = {
-    // Awareness - Eye symbol
-    'awareness-os': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="18" stroke={color} strokeWidth="2" opacity="0.3"/>
-        <ellipse cx="20" cy="20" rx="12" ry="8" stroke={color} strokeWidth="2"/>
-        <circle cx="20" cy="20" r="4" fill={color}/>
-        <circle cx="20" cy="20" r="1.5" fill="#0D1326"/>
-      </svg>
-    ),
+const COLORS = {
+  awareness: '#FFFFFF',
+  awarenessGlow: '#66D3FA',
+  kings: '#F2AA4C',
+  heroes: '#66D3FA',
+  shadows: '#E63946',
+  sages: '#009E60',
+  saboteurs: '#7F4FC9',
+  server: '#66D3FA',
+};
 
-    // Simorgh - Bird/Phoenix
-    'simorgh': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M20 8 L8 24 L20 20 L32 24 Z" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <path d="M20 20 L14 32 L20 28 L26 32 Z" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <circle cx="20" cy="14" r="2" fill={color}/>
-      </svg>
-    ),
+const SIZES = {
+  awareness: 100,
+  server: 90,
+  king: 80,
+  hero: 60,
+  shadow: 55,
+  saboteur: 45,
+};
 
-    // Rostam - Shield
-    'rostam': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M20 6 L32 12 L32 22 C32 28 26 34 20 36 C14 34 8 28 8 22 L8 12 Z" 
-          stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <path d="M20 14 L20 28" stroke={color} strokeWidth="2"/>
-        <path d="M14 20 L26 20" stroke={color} strokeWidth="2"/>
-      </svg>
-    ),
+export const shahnamehData: GraphData = {
+  nodes: [
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 0 — AWARENESS OS (ROOT)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'awareness-os',
+      nameEN: 'Awareness OS',
+      nameFA: 'سیستم آگاهی',
+      level: 'awareness',
+      shape: 'hexagon',
+      role: 'The Witness / Observer / Presence — Pure consciousness that perceives all internal processes without reacting or identifying',
+      strengths: ['Unchanging', 'Beyond thought', 'Can override all subsystems', 'The real I', 'Sees without becoming'],
+      color: COLORS.awareness,
+      size: SIZES.awareness,
+    },
 
-    // Sohrab - Rising star
-    'sohrab': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M20 6 L23 16 L34 16 L25 22 L28 32 L20 26 L12 32 L15 22 L6 16 L17 16 Z"
-          stroke={color} strokeWidth="2" fill={`${color}30`}/>
-      </svg>
-    ),
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 0 — SERVER LAYER (BEYOND-BRAIN)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'simorgh',
+      nameEN: 'Simorgh',
+      nameFA: 'سیمرغ',
+      level: 'server',
+      shape: 'hexagon',
+      role: 'Higher Self / Healing Intelligence — Meta-awareness that bridges the Server Layer and Brain Kingdom',
+      strengths: ['Heals inner fragmentation', 'Provides visionary insight', 'Mediates between Awareness and subsystems', 'Accessible through intuition (Zal)'],
+      color: COLORS.sages,
+      size: SIZES.server,
+    },
+    {
+      id: 'khvarenah',
+      nameEN: 'Khvarenah',
+      nameFA: 'فرّه ایزدی',
+      level: 'server',
+      shape: 'hexagon',
+      role: 'Divine Sovereignty / Royal Glory — The light of legitimate authority, inner nobility, alignment with cosmic order',
+      strengths: ['Inner nobility', 'Personal destiny alignment', 'Moral clarity', 'Cannot be faked'],
+      shadowDistortion: 'Can be lost through corruption, pride, or disconnection from truth (as Jamshid lost it)',
+      color: COLORS.kings,
+      size: SIZES.server,
+    },
+    {
+      id: 'supraconscious',
+      nameEN: 'Supraconscious Field',
+      nameFA: 'فراهوشیاری',
+      level: 'server',
+      shape: 'hexagon',
+      role: 'Source of sudden knowing, dreams, visions — transmits "updates" to the cognitive system',
+      strengths: ['Insight transmission', 'Dream communication', 'Symbolic messaging', 'Pattern revelation'],
+      color: COLORS.server,
+      size: SIZES.server - 10,
+    },
 
-    // Zahhak - Serpents
-    'zahhak': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="6" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <path d="M14 20 C10 16 6 18 4 14" stroke={color} strokeWidth="2" strokeLinecap="round"/>
-        <path d="M26 20 C30 16 34 18 36 14" stroke={color} strokeWidth="2" strokeLinecap="round"/>
-        <circle cx="4" cy="14" r="2" fill={color}/>
-        <circle cx="36" cy="14" r="2" fill={color}/>
-      </svg>
-    ),
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 2 — EXECUTIVE KINGS (COGNITIVE MODES)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'kay-khosrow',
+      nameEN: 'Kay Khosrow',
+      nameFA: 'کیخسرو',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Wisdom & Enlightened Leadership — The ideal sovereign: integrated reasoning, moral clarity, long-term vision',
+      strengths: ['Balanced judgment', 'Emotional maturity', 'Alignment with Simorgh', 'Knows when to release power'],
+      shadowDistortion: 'Over-detachment, spiritual bypassing, abandoning responsibilities for transcendence',
+      dependencies: ['Zal (intuition)', 'Farangis (emotional grounding)', 'Simorgh (higher guidance)'],
+      color: COLORS.kings,
+      size: SIZES.king,
+    },
+    {
+      id: 'kay-kavous',
+      nameEN: 'Kay Kavous',
+      nameFA: 'کیکاووس',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Ego, Impulse, Prestige — The king who acts before thinking, driven by image and ambition',
+      strengths: ['Drive', 'Courage to attempt difficult things', 'Ambition', 'Initiative'],
+      shadowDistortion: 'Recklessness, collapsing kingdoms through bad decisions, flying too close to the sun',
+      dependencies: ['Needs Kay Khosrow to correct', 'Needs Rostam to rescue from consequences'],
+      color: COLORS.kings,
+      size: SIZES.king,
+    },
+    {
+      id: 'jamshid',
+      nameEN: 'Jamshid',
+      nameFA: 'جمشید',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Imagination & Creativity — The innovator king who created civilization, then lost it to pride',
+      strengths: ['Creativity', 'Inspiration', 'Progress', 'Invention', 'Vision'],
+      shadowDistortion: 'When pride inflates → delusion, claims divinity, loses Khvarenah, vulnerable to Zahhak',
+      color: COLORS.kings,
+      size: SIZES.king,
+    },
+    {
+      id: 'goshtasp',
+      nameEN: 'Goshtasp',
+      nameFA: 'گشتاسپ',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Insecure Authority — Leadership corrupted by fear of being surpassed',
+      strengths: ['Structure', 'Responsibility', 'Religious conviction'],
+      shadowDistortion: 'Manipulation, paranoia, sacrifices own son (Esfandiyar) to maintain power',
+      color: COLORS.kings,
+      size: SIZES.king,
+    },
+    {
+      id: 'fereydun',
+      nameEN: 'Fereydun',
+      nameFA: 'فریدون',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Justice & Liberation — The king who overthrew Zahhak, represents righteous victory over tyranny',
+      strengths: ['Justice', 'Courage against evil', 'Proper succession planning'],
+      shadowDistortion: 'Division of kingdom among sons created future conflict (illustrates: even good kings make systemic errors)',
+      color: COLORS.kings,
+      size: SIZES.king,
+    },
+    {
+      id: 'manuchehr',
+      nameEN: 'Manuchehr',
+      nameFA: 'منوچهر',
+      level: 'king',
+      shape: 'hexagon',
+      role: 'Order Restoration — The king who re-establishes stability after chaos',
+      strengths: ['Stability', 'Continuity', 'Systematic governance'],
+      shadowDistortion: 'Can become rigid, resistant to necessary change',
+      color: COLORS.kings,
+      size: SIZES.king - 10,
+    },
 
-    // Zal - Feather
-    'zal': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M20 4 C20 4 28 12 28 24 C28 32 24 36 20 36 C16 36 12 32 12 24 C12 12 20 4 20 4"
-          stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <path d="M20 8 L20 32" stroke={color} strokeWidth="1.5"/>
-      </svg>
-    ),
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 3 — HEROIC SUBSYSTEMS (SPECIALIZED FORCES)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'rostam',
+      nameEN: 'Rostam',
+      nameFA: 'رستم',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Survival Instinct OS — Protection, courage, immediate response, the defender of the realm',
+      strengths: ['Power', 'Boundaries', 'Decisive action', 'Loyalty', 'Endurance'],
+      shadowDistortion: 'Can kill emerging potential (Sohrab) when manipulated by external forces. Ego cannot recognize its own potential.',
+      dependencies: ['Zal (father/intuition)', 'Rakhsh (body intelligence)', 'Kings (direction)'],
+      color: COLORS.heroes,
+      size: SIZES.hero,
+    },
+    {
+      id: 'zal',
+      nameEN: 'Zal',
+      nameFA: 'زال',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Intuition OS — Pattern recognition, insight, systemic understanding, bridge to Simorgh',
+      strengths: ['Access to Simorgh', 'Calm thinking', 'Reframing', 'Wisdom counsel', 'Patience'],
+      shadowDistortion: 'Overthinking if disconnected from intuition. Abandoned at birth — represents rejected wisdom.',
+      color: COLORS.heroes,
+      size: SIZES.hero,
+    },
+    {
+      id: 'sohrab',
+      nameEN: 'Sohrab',
+      nameFA: 'سهراب',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Potential & Pure Power — Youthful energy, new possibilities, unrealized capacity seeking integration',
+      strengths: ['Strength + innocence', 'Creativity', 'Seeks wholeness', 'Wants to unite, not destroy'],
+      shadowDistortion: 'If unrecognized by ego (Rostam) → destroyed. The tragedy: potential killed by the very system it sought to join.',
+      dependencies: ['Tahmineh (origin/container)', 'Seeks Rostam (integration with established power)'],
+      color: COLORS.heroes,
+      size: SIZES.hero,
+    },
+    {
+      id: 'esfandiyar',
+      nameEN: 'Esfandiyar',
+      nameFA: 'اسفندیار',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Duty & Discipline — Obedience to structure, invulnerable except at the eyes (blind spot)',
+      strengths: ['Persistence', 'Reliability', 'Religious devotion', 'Near-invulnerability'],
+      shadowDistortion: 'Blind loyalty → self-destruction. Cannot see that the authority he serves (Goshtasp) is corrupt.',
+      color: COLORS.heroes,
+      size: SIZES.hero,
+    },
+    {
+      id: 'kaveh',
+      nameEN: 'Kaveh',
+      nameFA: 'کاوه',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Righteous Rebellion — The blacksmith who said "enough." Basic awareness rebelling against tyranny.',
+      strengths: ['Courage against oppression', 'Catalyst for change', 'Voice of the people', 'Moral clarity'],
+      shadowDistortion: 'Rebellion without direction becomes chaos. Needs a Fereydun to channel the uprising.',
+      color: COLORS.heroes,
+      size: SIZES.hero,
+    },
+    {
+      id: 'rakhsh',
+      nameEN: 'Rakhsh',
+      nameFA: 'رخش',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Body Intelligence — Instinct that carries ego, physical wisdom, the loyal vehicle',
+      strengths: ['Loyalty', 'Instinctual response', 'Carries hero through danger', 'Fights alongside master'],
+      shadowDistortion: 'Cannot act without rider (conscious direction). Body without mind is reactive only.',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'tahmineh',
+      nameEN: 'Tahmineh',
+      nameFA: 'تهمینه',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Container of Potential — Where potential gestates before emerging, the womb of possibility',
+      strengths: ['Nurturing', 'Protection of nascent ideas', 'Patient incubation', 'Provides origin story'],
+      shadowDistortion: 'Over-protection preventing potential from facing necessary tests. Keeps Sohrab from knowing Rostam.',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'bizhan',
+      nameEN: 'Bizhan',
+      nameFA: 'بیژن',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Romantic Drive — The force that crosses boundaries for love/desire, risks everything',
+      strengths: ['Passion', 'Courage for love', 'Willingness to transgress for what matters'],
+      shadowDistortion: 'Captured and imprisoned when desire leads into enemy territory without calculation',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'manijeh',
+      nameEN: 'Manijeh',
+      nameFA: 'منیژه',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Love That Endures — Loyalty through imprisonment, the partner who stays when all is lost',
+      strengths: ['Devotion', 'Sacrifice', 'Persistence in darkness'],
+      shadowDistortion: 'Can lose self in service to other',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'gordafarid',
+      nameEN: 'Gordafarid',
+      nameFA: 'گردآفرید',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Strategic Resistance — The warrior who fights, then strategically retreats. Knows when to engage differently.',
+      strengths: ['Tactical intelligence', 'Courage', 'Strategic withdrawal', 'Adaptability'],
+      shadowDistortion: 'Deception as primary mode can erode trust',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'farangis',
+      nameEN: 'Farangis',
+      nameFA: 'فرنگیس',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Emotional Grounding — Mother of Kay Khosrow, provides the emotional foundation for wisdom',
+      strengths: ['Emotional stability', 'Grounding presence', 'Nurtures balanced leadership'],
+      shadowDistortion: 'Grief can overwhelm if not integrated',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
+    {
+      id: 'giv',
+      nameEN: 'Giv',
+      nameFA: 'گیو',
+      level: 'hero',
+      shape: 'circle',
+      role: 'Loyal Seeker — The one who searches for lost potential (Kay Khosrow) and brings it home',
+      strengths: ['Persistence', 'Loyalty', 'Search capability', 'Recognition of true worth'],
+      shadowDistortion: 'Can become fixated on single mission',
+      color: COLORS.heroes,
+      size: SIZES.hero - 10,
+    },
 
-    // Kaveh - Hammer
-    'kaveh': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <rect x="16" y="6" width="8" height="12" rx="1" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <rect x="18" y="18" width="4" height="16" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-        <path d="M10 34 L30 34" stroke={color} strokeWidth="2"/>
-      </svg>
-    ),
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 4 — SHADOW SUBSYSTEMS (CORE MORAL GOVERNORS)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'div-sepid',
+      nameEN: 'Fear (Div-e Sepid)',
+      nameFA: 'دیو سپید',
+      level: 'shadow',
+      shape: 'diamond',
+      role: 'Core Governor: FEAR — Forward-looking threat response. "What will happen to me?"',
+      strengths: ['Protects from real danger', 'Survival mechanism', 'Alertness'],
+      shadowDistortion: 'Creates paralysis, catastrophizing, irrational panic. Blinds Kay Kavous. Must be defeated by Rostam.',
+      color: COLORS.shadows,
+      size: SIZES.shadow,
+    },
+    {
+      id: 'siyavash-wound',
+      nameEN: 'Guilt (Siyavash)',
+      nameFA: 'سیاوش',
+      level: 'shadow',
+      shape: 'diamond',
+      role: 'Core Governor: GUILT — Backward-looking moral signal. "I did wrong." Also: innocence wrongly accused.',
+      strengths: ['Promotes repair & accountability', 'Signals moral conflict', 'Maintains ethical compass'],
+      shadowDistortion: 'Traps mind in endless self-judgment. Siyavash walked through fire to prove innocence — represents false guilt internalized, betrayed despite purity.',
+      color: COLORS.shadows,
+      size: SIZES.shadow,
+    },
+    {
+      id: 'zahhak',
+      nameEN: 'Shame (Zahhak)',
+      nameFA: 'ضحاک',
+      level: 'shadow',
+      shape: 'diamond',
+      role: 'Core Governor: SHAME — Identity corruption. "I AM wrong/broken/unworthy."',
+      strengths: ['Minimal — signals deep misalignment with core values'],
+      shadowDistortion: 'Serpents growing from shoulders, feeding on brains daily. Consumes mental energy to sustain itself. Must be hidden, creates secret feeding rituals. Tyranny that lasts 1000 years.',
+      color: COLORS.shadows,
+      size: SIZES.shadow,
+    },
+    {
+      id: 'akvan-div',
+      nameEN: 'Akvan Div',
+      nameFA: 'اکوان دیو',
+      level: 'shadow',
+      shape: 'diamond',
+      role: 'Deceptive Choice — The demon who offers false binaries, tricks through apparent options',
+      strengths: ['Tests discernment'],
+      shadowDistortion: 'Presents lose-lose choices. Rostam survives by choosing opposite of what Akvan wants.',
+      color: COLORS.shadows,
+      size: SIZES.shadow - 10,
+    },
+    {
+      id: 'arzhang-div',
+      nameEN: 'Arzhang Div',
+      nameFA: 'ارژنگ دیو',
+      level: 'shadow',
+      shape: 'diamond',
+      role: 'Overwhelming Force — Raw destructive power that must be met with equal force',
+      strengths: ['Tests raw strength'],
+      shadowDistortion: 'Pure aggression without strategy',
+      color: COLORS.shadows,
+      size: SIZES.shadow - 10,
+    },
 
-    // Fear - Eye with slash
-    'div-sepid': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <ellipse cx="20" cy="20" rx="14" ry="10" stroke={color} strokeWidth="2" fill={`${color}20`}/>
-        <circle cx="20" cy="20" r="5" stroke={color} strokeWidth="2"/>
-        <path d="M8 32 L32 8" stroke={color} strokeWidth="2"/>
-      </svg>
-    ),
+    // ═══════════════════════════════════════════════════════════
+    // LEVEL 5 — SABOTEUR SUBSYSTEMS (INTERNAL DISRUPTORS)
+    // ═══════════════════════════════════════════════════════════
+    {
+      id: 'sudabeh',
+      nameEN: 'Sudabeh',
+      nameFA: 'سوداوه',
+      level: 'saboteur',
+      shape: 'diamond',
+      role: 'Manipulation & Desire Distortion — False accusation, desire misdirected into destruction',
+      strengths: ['None in healthy form'],
+      shadowDistortion: 'Falsely accuses Siyavash of assault. Desire rejected becomes destruction. Pulls perception into emotional chaos.',
+      color: COLORS.saboteurs,
+      size: SIZES.saboteur,
+    },
+    {
+      id: 'garsivaz',
+      nameEN: 'Garsivaz',
+      nameFA: 'گرسیوز',
+      level: 'saboteur',
+      shape: 'diamond',
+      role: 'Inner Betrayer — Self-sabotage, envy, internal division, the whisper that poisons',
+      strengths: ['None in healthy form'],
+      shadowDistortion: 'Whispers to Afrasiab that Siyavash will betray him. Creates division through false counsel. The voice that says "they will hurt you first."',
+      color: COLORS.saboteurs,
+      size: SIZES.saboteur,
+    },
+    {
+      id: 'afrasiab',
+      nameEN: 'Afrasiab',
+      nameFA: 'افراسیاب',
+      level: 'saboteur',
+      shape: 'diamond',
+      role: 'Persistent External Threat — Ancestral trauma, intrusive patterns that keep invading across generations',
+      strengths: ['Tests system resilience', 'Forces growth through conflict'],
+      shadowDistortion: 'Emotional storms, inability to focus, impulsive reactions. Kills Siyavash despite having adopted him. The threat that keeps returning regardless of treaties.',
+      color: COLORS.saboteurs,
+      size: SIZES.saboteur,
+    },
+    {
+      id: 'piran',
+      nameEN: 'Piran',
+      nameFA: 'پیران',
+      level: 'saboteur',
+      shape: 'diamond',
+      role: 'Conflicted Loyalty — Good counsel in service of flawed system',
+      strengths: ['Wisdom', 'Attempts to moderate evil'],
+      shadowDistortion: 'Cannot leave the system he knows is wrong. Serves Afrasiab while protecting Siyavash\'s family. The tragedy of good people in bad systems.',
+      color: COLORS.saboteurs,
+      size: SIZES.saboteur,
+    },
+    {
+      id: 'human',
+      nameEN: 'Human',
+      nameFA: 'هومان',
+      level: 'saboteur',
+      shape: 'diamond',
+      role: 'Warrior Without Reflection — Pure combat function, honor without questioning purpose',
+      strengths: ['Bravery', 'Combat skill'],
+      shadowDistortion: 'Fights for Turan without examining why. The part of us that acts from conditioning.',
+      color: COLORS.saboteurs,
+      size: SIZES.saboteur - 10,
+    },
+  ],
 
-    // Afrasiab - Storm
-    'afrasiab': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M8 20 Q14 8 20 20 Q26 32 32 20" stroke={color} strokeWidth="2" fill="none"/>
-        <path d="M8 28 Q14 16 20 28 Q26 40 32 28" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
-        <path d="M8 12 Q14 0 20 12 Q26 24 32 12" stroke={color} strokeWidth="2" fill="none" opacity="0.5"/>
-      </svg>
-    ),
+  // ═══════════════════════════════════════════════════════════
+  // CONNECTIONS — THE RELATIONSHIP WEB
+  // ═══════════════════════════════════════════════════════════
+  connections: [
+    // AWARENESS ↔ SERVER LAYER
+    { source: 'awareness-os', target: 'simorgh', type: 'integrates_with' },
+    { source: 'awareness-os', target: 'khvarenah', type: 'integrates_with' },
+    { source: 'awareness-os', target: 'supraconscious', type: 'integrates_with' },
+    { source: 'simorgh', target: 'khvarenah', type: 'serves' },
+    { source: 'supraconscious', target: 'simorgh', type: 'serves' },
 
-    // Khvarenah - Crown/Halo
-    'khvarenah': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="14" stroke={color} strokeWidth="2" fill="none" opacity="0.3"/>
-        <circle cx="20" cy="20" r="10" stroke={color} strokeWidth="2" fill={`${color}20`}/>
-        <path d="M20 6 L22 14 L20 12 L18 14 Z" fill={color}/>
-        <path d="M34 20 L26 22 L28 20 L26 18 Z" fill={color}/>
-        <path d="M20 34 L18 26 L20 28 L22 26 Z" fill={color}/>
-        <path d="M6 20 L14 18 L12 20 L14 22 Z" fill={color}/>
-      </svg>
-    ),
+    // SIMORGH ↔ HEROES/KINGS (Healing connections)
+    { source: 'simorgh', target: 'zal', type: 'heals' },
+    { source: 'simorgh', target: 'kay-khosrow', type: 'heals' },
+    { source: 'simorgh', target: 'rostam', type: 'heals' },
+    { source: 'simorgh', target: 'fereydun', type: 'heals' },
 
-    // Esfandiyar - Armored eye
-    'esfandiyar': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <circle cx="20" cy="20" r="14" stroke={color} strokeWidth="2" fill={`${color}20`}/>
-        <circle cx="20" cy="20" r="6" stroke={color} strokeWidth="2" fill="none"/>
-        <circle cx="20" cy="20" r="2" fill={color}/>
-      </svg>
-    ),
+    // KHVARENAH FLOW (Who has/loses divine glory)
+    { source: 'khvarenah', target: 'jamshid', type: 'serves' },
+    { source: 'khvarenah', target: 'kay-khosrow', type: 'serves' },
+    { source: 'khvarenah', target: 'fereydun', type: 'serves' },
+    { source: 'jamshid', target: 'khvarenah', type: 'conflicts_with' },
 
-    // Guilt/Siyavash - Fire
-    'siyavash-wound': (
-      <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-        <path d="M20 36 C12 36 8 28 8 22 C8 16 12 12 16 8 C16 14 18 16 20 14 C22 16 24 14 24 8 C28 12 32 16 32 22 C32 28 28 36 20 36" 
-          stroke={color} strokeWidth="2" fill={`${color}20`}/>
-        <path d="M20 36 C16 36 14 30 14 26 C14 22 16 20 20 18 C24 20 26 22 26 26 C26 30 24 36 20 36" 
-          fill={color} opacity="0.5"/>
-      </svg>
-    ),
-  };
+    // KING ↔ KING RELATIONSHIPS
+    { source: 'kay-khosrow', target: 'kay-kavous', type: 'heals' },
+    { source: 'fereydun', target: 'manuchehr', type: 'serves' },
+    { source: 'manuchehr', target: 'kay-kavous', type: 'serves' },
+    { source: 'jamshid', target: 'fereydun', type: 'serves' },
 
-  // Default icon for kings
-  const defaultKing = (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <path d="M6 28 L10 12 L20 20 L30 12 L34 28 Z" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-      <circle cx="10" cy="12" r="2" fill={color}/>
-      <circle cx="20" cy="8" r="2" fill={color}/>
-      <circle cx="30" cy="12" r="2" fill={color}/>
-      <rect x="6" y="28" width="28" height="6" rx="1" stroke={color} strokeWidth="2" fill={`${color}30`}/>
-    </svg>
-  );
+    // KING ↔ HERO (Command structure)
+    { source: 'kay-kavous', target: 'rostam', type: 'serves' },
+    { source: 'kay-khosrow', target: 'rostam', type: 'serves' },
+    { source: 'kay-khosrow', target: 'giv', type: 'serves' },
+    { source: 'kay-khosrow', target: 'bizhan', type: 'serves' },
+    { source: 'goshtasp', target: 'esfandiyar', type: 'corrupts' },
+    { source: 'fereydun', target: 'kaveh', type: 'integrates_with' },
 
-  // Default icon for heroes
-  const defaultHero = (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <circle cx="20" cy="20" r="14" stroke={color} strokeWidth="2" fill={`${color}20`}/>
-      <circle cx="20" cy="20" r="6" fill={color} opacity="0.4"/>
-    </svg>
-  );
+    // HERO ↔ HERO (Internal relationships)
+    { source: 'zal', target: 'rostam', type: 'serves' },
+    { source: 'rostam', target: 'sohrab', type: 'conflicts_with' },
+    { source: 'tahmineh', target: 'sohrab', type: 'serves' },
+    { source: 'rakhsh', target: 'rostam', type: 'serves' },
+    { source: 'esfandiyar', target: 'rostam', type: 'conflicts_with' },
+    { source: 'bizhan', target: 'manijeh', type: 'integrates_with' },
+    { source: 'giv', target: 'bizhan', type: 'serves' },
+    { source: 'giv', target: 'kay-khosrow', type: 'heals' },
+    { source: 'farangis', target: 'kay-khosrow', type: 'heals' },
+    { source: 'gordafarid', target: 'sohrab', type: 'conflicts_with' },
+    { source: 'zal', target: 'simorgh', type: 'integrates_with' },
 
-  // Default icon for shadows/saboteurs
-  const defaultShadow = (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none">
-      <polygon points="20,4 36,20 20,36 4,20" stroke={color} strokeWidth="2" fill={`${color}20`}/>
-      <line x1="20" y1="12" x2="20" y2="28" stroke={color} strokeWidth="2" opacity="0.5"/>
-    </svg>
-  );
+    // SHADOW (Core Triad) ↔ AWARENESS
+    { source: 'awareness-os', target: 'div-sepid', type: 'integrates_with' },
+    { source: 'awareness-os', target: 'siyavash-wound', type: 'integrates_with' },
+    { source: 'awareness-os', target: 'zahhak', type: 'integrates_with' },
 
-  if (icons[archetype]) {
-    return icons[archetype];
-  }
+    // SHADOW ↔ KINGS (Corruption patterns)
+    { source: 'zahhak', target: 'jamshid', type: 'corrupts' },
+    { source: 'jamshid', target: 'zahhak', type: 'serves' },
+    { source: 'div-sepid', target: 'kay-kavous', type: 'corrupts' },
+    { source: 'zahhak', target: 'fereydun', type: 'conflicts_with' },
 
-  // Return default based on naming patterns
-  if (archetype.includes('king') || archetype.includes('kay') || archetype.includes('jamshid') || 
-      archetype.includes('goshtasp') || archetype.includes('fereydun') || archetype.includes('manuchehr')) {
-    return defaultKing;
-  }
-  
-  if (archetype.includes('div') || archetype.includes('sudabeh') || archetype.includes('garsivaz') || 
-      archetype.includes('piran') || archetype.includes('human')) {
-    return defaultShadow;
-  }
+    // SHADOW ↔ HEROES (Battles)
+    { source: 'div-sepid', target: 'rostam', type: 'conflicts_with' },
+    { source: 'zahhak', target: 'kaveh', type: 'conflicts_with' },
+    { source: 'akvan-div', target: 'rostam', type: 'conflicts_with' },
+    { source: 'arzhang-div', target: 'rostam', type: 'conflicts_with' },
 
-  return defaultHero;
-}
+    // SABOTEUR ↔ SHADOW (How sabotage activates shadow)
+    { source: 'sudabeh', target: 'siyavash-wound', type: 'corrupts' },
+    { source: 'garsivaz', target: 'siyavash-wound', type: 'corrupts' },
+    { source: 'afrasiab', target: 'siyavash-wound', type: 'corrupts' },
+
+    // SABOTEUR ↔ KINGS/HEROES
+    { source: 'afrasiab', target: 'kay-khosrow', type: 'conflicts_with' },
+    { source: 'afrasiab', target: 'kay-kavous', type: 'conflicts_with' },
+    { source: 'sudabeh', target: 'kay-kavous', type: 'corrupts' },
+    { source: 'piran', target: 'afrasiab', type: 'serves' },
+    { source: 'piran', target: 'siyavash-wound', type: 'heals' },
+    { source: 'piran', target: 'farangis', type: 'heals' },
+    { source: 'piran', target: 'kay-khosrow', type: 'heals' },
+    { source: 'human', target: 'afrasiab', type: 'serves' },
+    { source: 'garsivaz', target: 'afrasiab', type: 'corrupts' },
+    { source: 'manijeh', target: 'afrasiab', type: 'conflicts_with' },
+
+    // CROSS-LEVEL INTEGRATIONS
+    { source: 'rostam', target: 'awareness-os', type: 'serves' },
+    { source: 'kay-khosrow', target: 'awareness-os', type: 'serves' },
+    { source: 'zal', target: 'awareness-os', type: 'serves' },
+    { source: 'kaveh', target: 'awareness-os', type: 'serves' },
+  ],
+};
