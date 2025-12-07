@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { CognitiveGraph } from './components/Graph/CognitiveGraph';
 import { InfoPanel } from './components/InfoPanel/InfoPanel';
-import { MobileView } from './components/MobileView/MobileView';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
 import { TesseractMesh } from './components/Background/TesseractMesh';
 import { shahnamehData } from './data/shahnameh-graph';
@@ -11,17 +10,7 @@ import './App.css';
 function App() {
   const [selectedNode, setSelectedNode] = useState<CognitiveNode | null>(null);
   const [isVapiActive, setIsVapiActive] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleNodeClick = (node: CognitiveNode) => {
     setSelectedNode(node);
@@ -31,34 +20,22 @@ function App() {
     setSelectedNode(null);
   };
 
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <div className="app-container mobile">
-        <TesseractMesh />
-        
-        <MobileView
-          nodes={shahnamehData.nodes}
-          onNodeSelect={handleNodeClick}
-        />
+  // Filter nodes based on search
+  const getHighlightedNodeIds = (): string[] => {
+    if (!searchQuery.trim()) return [];
+    
+    const query = searchQuery.toLowerCase();
+    return shahnamehData.nodes
+      .filter(node => 
+        node.nameEN.toLowerCase().includes(query) ||
+        node.nameFA.includes(searchQuery) ||
+        node.role.toLowerCase().includes(query)
+      )
+      .map(node => node.id);
+  };
 
-        <InfoPanel 
-          node={selectedNode} 
-          connections={shahnamehData.connections}
-          allNodes={shahnamehData.nodes}
-          onClose={handleClosePanel}
-          isMobile={true}
-        />
+  const highlightedNodes = getHighlightedNodeIds();
 
-        <VapiOrb 
-          isActive={isVapiActive}
-          onToggle={() => setIsVapiActive(!isVapiActive)}
-        />
-      </div>
-    );
-  }
-
-  // Desktop layout
   return (
     <div className="app-container">
       <TesseractMesh />
@@ -66,6 +43,29 @@ function App() {
       <header className="app-header">
         <h1 className="title-en">Shahnameh Cognitive OS</h1>
         <p className="title-fa">سیستم عامل شناختی شاهنامه</p>
+        
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Search characters..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+          {searchQuery && (
+            <button 
+              className="search-clear"
+              onClick={() => setSearchQuery('')}
+            >
+              ×
+            </button>
+          )}
+          {searchQuery && highlightedNodes.length > 0 && (
+            <span className="search-count">
+              {highlightedNodes.length} found
+            </span>
+          )}
+        </div>
       </header>
 
       <div className="legend">
@@ -92,6 +92,7 @@ function App() {
           data={shahnamehData} 
           onNodeClick={handleNodeClick}
           selectedNodeId={selectedNode?.id}
+          highlightedNodeIds={highlightedNodes}
         />
       </main>
 
@@ -100,7 +101,6 @@ function App() {
         connections={shahnamehData.connections}
         allNodes={shahnamehData.nodes}
         onClose={handleClosePanel}
-        isMobile={false}
       />
 
       <VapiOrb 
