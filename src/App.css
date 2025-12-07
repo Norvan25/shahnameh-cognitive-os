@@ -1,114 +1,153 @@
-import { useState, useEffect } from 'react';
-import { CognitiveGraph } from './components/Graph/CognitiveGraph';
-import { InfoPanel } from './components/InfoPanel/InfoPanel';
-import { MobileView } from './components/MobileView/MobileView';
-import { VapiOrb } from './components/VapiOrb/VapiOrb';
-import { TesseractMesh } from './components/Background/TesseractMesh';
-import { shahnamehData } from './data/shahnameh-graph';
-import type { CognitiveNode } from './types/graph.types';
-import './App.css';
-
-function App() {
-  const [selectedNode, setSelectedNode] = useState<CognitiveNode | null>(null);
-  const [isVapiActive, setIsVapiActive] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleNodeClick = (node: CognitiveNode) => {
-    setSelectedNode(node);
-  };
-
-  const handleClosePanel = () => {
-    setSelectedNode(null);
-  };
-
-  // Mobile layout
-  if (isMobile) {
-    return (
-      <div className="app-container mobile">
-        <TesseractMesh />
-        
-        <MobileView
-          nodes={shahnamehData.nodes}
-          onNodeSelect={handleNodeClick}
-        />
-
-        <InfoPanel 
-          node={selectedNode} 
-          connections={shahnamehData.connections}
-          allNodes={shahnamehData.nodes}
-          onClose={handleClosePanel}
-          isMobile={true}
-        />
-
-        <VapiOrb 
-          isActive={isVapiActive}
-          onToggle={() => setIsVapiActive(!isVapiActive)}
-        />
-      </div>
-    );
-  }
-
-  // Desktop layout
-  return (
-    <div className="app-container">
-      <TesseractMesh />
-      
-      <header className="app-header">
-        <h1 className="title-en">Shahnameh Cognitive OS</h1>
-        <p className="title-fa">سیستم عامل شناختی شاهنامه</p>
-      </header>
-
-      <div className="legend">
-        <div className="legend-item">
-          <span className="legend-line heals"></span>
-          <span>Heals</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-line conflicts"></span>
-          <span>Conflicts</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-line corrupts"></span>
-          <span>Corrupts</span>
-        </div>
-        <div className="legend-item">
-          <span className="legend-line serves"></span>
-          <span>Serves</span>
-        </div>
-      </div>
-
-      <main className="graph-container">
-        <CognitiveGraph 
-          data={shahnamehData} 
-          onNodeClick={handleNodeClick}
-          selectedNodeId={selectedNode?.id}
-        />
-      </main>
-
-      <InfoPanel 
-        node={selectedNode} 
-        connections={shahnamehData.connections}
-        allNodes={shahnamehData.nodes}
-        onClose={handleClosePanel}
-        isMobile={false}
-      />
-
-      <VapiOrb 
-        isActive={isVapiActive}
-        onToggle={() => setIsVapiActive(!isVapiActive)}
-      />
-    </div>
-  );
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-export default App;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  background: #0D1326;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-container.mobile {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.app-header {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 10;
+}
+
+.title-en {
+  font-family: 'Poppins', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.title-fa {
+  font-family: 'Vazirmatn', 'Poppins', sans-serif;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 4px 0 0 0;
+}
+
+/* Graph Container - FULL VIEWPORT */
+.graph-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.cognitive-graph {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Legend */
+.legend {
+  position: absolute;
+  bottom: 24px;
+  left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(13, 19, 38, 0.8);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.legend-line {
+  width: 24px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.legend-line.heals {
+  background: #009E60;
+}
+
+.legend-line.conflicts {
+  background: #E63946;
+}
+
+.legend-line.corrupts {
+  background: #7F4FC9;
+}
+
+.legend-line.serves {
+  background: rgba(102, 211, 250, 0.4);
+}
+
+/* Node styles */
+.node {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.node:hover {
+  transform: scale(1.1);
+}
+
+.glow-ring {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    stroke-opacity: 0.3;
+    r: 55;
+  }
+  50% {
+    stroke-opacity: 0.6;
+    r: 60;
+  }
+}
+
+/* Labels */
+.label-en {
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.label-fa {
+  pointer-events: none;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Links */
+.links line {
+  stroke-linecap: round;
+}
+
+/* Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
