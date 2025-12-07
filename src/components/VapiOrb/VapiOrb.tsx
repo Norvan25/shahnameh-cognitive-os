@@ -29,110 +29,76 @@ export function VapiOrb({ isActive, onToggle }: Props) {
   const [sdkReady, setSdkReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load VAPI Web SDK (correct one for custom UI)
+  // Load VAPI Web SDK
   useEffect(() => {
     const script = document.createElement('script');
-    // Use the WEB SDK, not the HTML widget SDK
     script.src = 'https://unpkg.com/@vapi-ai/web@latest/dist/vapi.umd.js';
     script.async = true;
 
     script.onload = () => {
-      console.log('VAPI script loaded, window.Vapi:', !!window.Vapi);
-      
       if (window.Vapi) {
         try {
-          // Create instance with public key
           vapiRef.current = new window.Vapi(VAPI_PUBLIC_KEY);
-          console.log('VAPI instance created:', !!vapiRef.current);
           
-          // Setup listeners
           vapiRef.current.on('call-start', () => {
-            console.log('Call started');
             setIsConnecting(false);
             setError(null);
           });
 
           vapiRef.current.on('call-end', () => {
-            console.log('Call ended');
             setIsConnecting(false);
             setIsSpeaking(false);
             if (isActive) onToggle();
           });
 
-          vapiRef.current.on('speech-start', () => {
-            setIsSpeaking(true);
-          });
-
-          vapiRef.current.on('speech-end', () => {
-            setIsSpeaking(false);
-          });
-
-          vapiRef.current.on('volume-level', (level: number) => {
-            setVolumeLevel(level);
-          });
-
+          vapiRef.current.on('speech-start', () => setIsSpeaking(true));
+          vapiRef.current.on('speech-end', () => setIsSpeaking(false));
+          vapiRef.current.on('volume-level', (level: number) => setVolumeLevel(level));
+          
           vapiRef.current.on('error', (err: any) => {
-            console.error('VAPI error:', err);
-            setError(err?.message || 'Connection error');
+            console.error('VAPI Error:', err);
+            setError(err?.message || 'Error');
             setIsConnecting(false);
           });
 
-          vapiRef.current.on('message', (msg: any) => {
-            console.log('VAPI message:', msg);
-          });
-
           setSdkReady(true);
-          setError(null);
         } catch (err: any) {
-          console.error('Failed to create VAPI instance:', err);
-          setError('Failed to initialize');
+          setError('Init failed');
         }
-      } else {
-        setError('SDK not found');
       }
     };
 
-    script.onerror = () => {
-      setError('Failed to load SDK');
-    };
-
+    script.onerror = () => setError('Load failed');
     document.body.appendChild(script);
 
     return () => {
-      if (vapiRef.current) {
-        vapiRef.current.stop();
-      }
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
+      if (vapiRef.current) vapiRef.current.stop();
+      if (script.parentNode) script.parentNode.removeChild(script);
     };
   }, []);
 
   const handleToggle = async () => {
-    console.log('Button clicked, sdkReady:', sdkReady, 'vapiRef:', !!vapiRef.current);
-    
     if (!vapiRef.current) {
-      setError('SDK not ready');
+      setError('Not ready');
       return;
     }
 
     if (isActive) {
-      console.log('Stopping call...');
       vapiRef.current.stop();
       onToggle();
     } else {
-      console.log('Starting call with assistant:', VAPI_ASSISTANT_ID);
       setIsConnecting(true);
       setError(null);
       onToggle();
       
       try {
-        // Start call with assistant ID
-        await vapiRef.current.start(VAPI_ASSISTANT_ID);
-        console.log('Call start initiated');
+        // FIXED: Pass object with assistantId, not just string
+        await vapiRef.current.start({
+          assistantId: VAPI_ASSISTANT_ID
+        });
       } catch (err: any) {
-        console.error('Failed to start:', err);
-        setError(err?.message || 'Failed to start');
+        console.error('Start error:', err);
+        setError(err?.message || 'Start failed');
         setIsConnecting(false);
         onToggle();
       }
@@ -205,7 +171,6 @@ export function VapiOrb({ isActive, onToggle }: Props) {
         )}
       </button>
 
-      {/* Status/Error display */}
       {error && (
         <div style={{
           position: 'fixed',
@@ -216,7 +181,6 @@ export function VapiOrb({ isActive, onToggle }: Props) {
           padding: '6px 12px',
           borderRadius: '8px',
           fontSize: '12px',
-          fontFamily: 'Poppins, sans-serif',
           zIndex: 101,
         }}>
           {error}
