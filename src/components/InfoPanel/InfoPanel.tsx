@@ -1,4 +1,4 @@
-import { CognitiveNode, Connection } from '../../types/graph.types';
+import type { CognitiveNode, Connection } from '../../types/graph.types';
 import { ArchetypeIcon } from '../Icons/ArchetypeIcon';
 import './InfoPanel.css';
 
