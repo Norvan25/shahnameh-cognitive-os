@@ -18,21 +18,16 @@ html, body, #root {
   overflow: hidden;
 }
 
-.app-container.mobile {
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
 .app-header {
   position: absolute;
-  top: 24px;
-  left: 24px;
+  top: 16px;
+  left: 16px;
   z-index: 10;
 }
 
 .title-en {
   font-family: 'Poppins', sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
   color: #FFFFFF;
   margin: 0;
@@ -40,9 +35,61 @@ html, body, #root {
 
 .title-fa {
   font-family: 'Vazirmatn', 'Poppins', sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.6);
   margin: 4px 0 0 0;
+}
+
+/* Search */
+.search-container {
+  margin-top: 16px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  width: 220px;
+  padding: 10px 36px 10px 14px;
+  background: rgba(19, 34, 56, 0.9);
+  border: 1px solid rgba(102, 211, 250, 0.3);
+  border-radius: 8px;
+  color: #FFFFFF;
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.search-input:focus {
+  border-color: #66D3FA;
+}
+
+.search-clear {
+  position: absolute;
+  right: 70px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 8px;
+}
+
+.search-clear:hover {
+  color: #FFFFFF;
+}
+
+.search-count {
+  font-family: 'Poppins', sans-serif;
+  font-size: 12px;
+  color: #66D3FA;
+  white-space: nowrap;
 }
 
 /* Graph Container - FULL VIEWPORT */
@@ -65,13 +112,13 @@ html, body, #root {
 /* Legend */
 .legend {
   position: absolute;
-  bottom: 24px;
-  left: 24px;
+  bottom: 16px;
+  left: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: rgba(13, 19, 38, 0.8);
-  padding: 16px;
+  gap: 6px;
+  background: rgba(13, 19, 38, 0.9);
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 10;
@@ -82,12 +129,12 @@ html, body, #root {
   align-items: center;
   gap: 8px;
   font-family: 'Poppins', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.7);
 }
 
 .legend-line {
-  width: 24px;
+  width: 20px;
   height: 3px;
   border-radius: 2px;
 }
@@ -105,12 +152,20 @@ html, body, #root {
 }
 
 .legend-line.serves {
-  background: rgba(102, 211, 250, 0.4);
+  background: rgba(102, 211, 250, 0.6);
 }
 
-/* Node styles - NO TRANSFORM ON HOVER */
+/* Node styles */
 .node {
   cursor: pointer;
+}
+
+.node.dimmed {
+  opacity: 0.2;
+}
+
+.node.highlighted {
+  filter: drop-shadow(0 0 10px #66D3FA);
 }
 
 .glow-ring {
@@ -140,6 +195,42 @@ html, body, #root {
 /* Links */
 .links line {
   stroke-linecap: round;
+}
+
+.links line.dimmed {
+  opacity: 0.1;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .app-header {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+  }
+
+  .title-en {
+    font-size: 18px;
+  }
+
+  .title-fa {
+    font-size: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .legend {
+    bottom: 80px;
+    left: 12px;
+    padding: 10px;
+  }
+
+  .legend-item {
+    font-size: 10px;
+  }
 }
 
 /* Fonts */
