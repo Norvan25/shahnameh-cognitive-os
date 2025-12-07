@@ -19,6 +19,7 @@ const CONNECTION_COLORS: Record<RelationshipType, string> = {
 export function CognitiveGraph({ data, onNodeClick }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const simulationRef = useRef<d3.Simulation<any, any> | null>(null);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current) return;
@@ -66,7 +67,7 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       target: d.target,
     }));
 
-    // Force simulation with STRONGER forces
+    // Force simulation
     const simulation = d3.forceSimulation(nodes as d3.SimulationNodeDatum[])
       .force('link', d3.forceLink(links)
         .id((d: any) => d.id)
@@ -74,16 +75,20 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
         .strength(0.3)
       )
       .force('charge', d3.forceManyBody()
-        .strength(-1500)
-        .distanceMax(800)
+        .strength(-1200)
+        .distanceMax(600)
       )
       .force('center', d3.forceCenter(width / 2, height / 2))
       .force('collision', d3.forceCollide()
-        .radius((d: any) => d.size * 0.8 + 40)
-        .strength(0.8)
+        .radius((d: any) => d.size * 0.6 + 30)
+        .strength(0.7)
       )
-      .force('x', d3.forceX(width / 2).strength(0.03))
-      .force('y', d3.forceY(height / 2).strength(0.03));
+      .force('x', d3.forceX(width / 2).strength(0.02))
+      .force('y', d3.forceY(height / 2).strength(0.02))
+      .alphaDecay(0.02)  // Slower decay = smoother settling
+      .velocityDecay(0.4);  // Higher = more damping = less jitter
+
+    simulationRef.current = simulation;
 
     // Draw connections
     const link = g.append('g')
@@ -105,16 +110,7 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       .enter()
       .append('g')
       .attr('class', 'node')
-      .style('cursor', 'pointer')
-      .call(d3.drag<SVGGElement, any>()
-        .on('start', dragstarted)
-        .on('drag', dragged)
-        .on('end', dragended)
-      )
-      .on('click', (event, d) => {
-        event.stopPropagation();
-        onNodeClick(d as CognitiveNode);
-      });
+      .style('cursor', 'pointer');
 
     // Node shapes
     node.each(function(d: any) {
@@ -154,6 +150,13 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       }
     });
 
+    // Add invisible larger hit area for easier clicking
+    node.append('circle')
+      .attr('r', (d: any) => d.size * 0.6 + 10)
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none')
+      .style('cursor', 'pointer');
+
     // Labels
     node.append('text')
       .attr('class', 'label-en')
@@ -174,6 +177,30 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       .attr('font-family', 'Vazirmatn, sans-serif')
       .text((d: any) => d.nameFA);
 
+    // Click handler
+    node.on('click', (event, d) => {
+      event.stopPropagation();
+      onNodeClick(d as CognitiveNode);
+    });
+
+    // Drag handlers - fixed position during drag
+    node.call(d3.drag<SVGGElement, any>()
+      .on('start', function(event, d) {
+        if (!event.active) simulation.alphaTarget(0.1).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      })
+      .on('drag', function(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      })
+      .on('end', function(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      })
+    );
+
     // Simulation tick
     simulation.on('tick', () => {
       link
@@ -185,26 +212,13 @@ export function CognitiveGraph({ data, onNodeClick }: Props) {
       node.attr('transform', (d: any) => `translate(${d.x},${d.y})`);
     });
 
-    // Drag functions
-    function dragstarted(event: d3.D3DragEvent<SVGGElement, any, any>) {
-      if (!event.active) simulation.alphaTarget(0.3).restart();
-      event.subject.fx = event.subject.x;
-      event.subject.fy = event.subject.y;
-    }
-
-    function dragged(event: d3.D3DragEvent<SVGGElement, any, any>) {
-      event.subject.fx = event.x;
-      event.subject.fy = event.y;
-    }
-
-    function dragended(event: d3.D3DragEvent<SVGGElement, any, any>) {
-      if (!event.active) simulation.alphaTarget(0);
-      event.subject.fx = null;
-      event.subject.fy = null;
-    }
-
-    // Run simulation hot for a bit then cool
+    // Let simulation run and settle
     simulation.alpha(1).restart();
+
+    // Stop simulation after settling to prevent ongoing jitter
+    setTimeout(() => {
+      simulation.alphaTarget(0);
+    }, 3000);
 
     return () => {
       simulation.stop();
