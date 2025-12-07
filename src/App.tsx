@@ -5,7 +5,7 @@ import { MobileView } from './components/MobileView/MobileView';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
 import { TesseractMesh } from './components/Background/TesseractMesh';
 import { shahnamehData } from './data/shahnameh-graph';
-import { CognitiveNode } from './types/graph.types';
+import type { CognitiveNode } from './types/graph.types';
 import './App.css';
 
 function App() {
