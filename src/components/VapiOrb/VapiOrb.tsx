@@ -1,68 +1,137 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './VapiOrb.css';
+
+declare global {
+  interface Window {
+    vapiSDK?: any;
+  }
+}
 
 interface Props {
   isActive: boolean;
   onToggle: () => void;
 }
 
+// =====================================================
+// YOUR VAPI CREDENTIALS
+// =====================================================
+const VAPI_PUBLIC_KEY = '66c0ce2f-9976-4555-9cb0-df2b11c36778';
+const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
+// =====================================================
+
 export function VapiOrb({ isActive, onToggle }: Props) {
+  const vapiRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(0);
 
+  // Load VAPI SDK
   useEffect(() => {
-    if (!isActive || !canvasRef.current) return;
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@vapi-ai/web@latest/dist/vapi-web.min.js';
+    script.async = true;
+    script.onload = () => {
+      if (window.vapiSDK) {
+        vapiRef.current = new window.vapiSDK(VAPI_PUBLIC_KEY);
+        setupVapiListeners();
+      }
+    };
+    document.body.appendChild(script);
+
+    return () => {
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const setupVapiListeners = () => {
+    if (!vapiRef.current) return;
+
+    vapiRef.current.on('call-start', () => {
+      setIsConnecting(false);
+    });
+
+    vapiRef.current.on('call-end', () => {
+      setIsConnecting(false);
+      setIsSpeaking(false);
+      if (isActive) onToggle();
+    });
+
+    vapiRef.current.on('speech-start', () => setIsSpeaking(true));
+    vapiRef.current.on('speech-end', () => setIsSpeaking(false));
+    vapiRef.current.on('volume-level', (level: number) => setVolumeLevel(level));
+    vapiRef.current.on('error', () => setIsConnecting(false));
+  };
+
+  const handleToggle = async () => {
+    if (!vapiRef.current) return;
+
+    if (isActive) {
+      vapiRef.current.stop();
+      onToggle();
+    } else {
+      setIsConnecting(true);
+      onToggle();
+      try {
+        await vapiRef.current.start(VAPI_ASSISTANT_ID);
+      } catch (error) {
+        setIsConnecting(false);
+        onToggle();
+      }
+    }
+  };
+
+  // Waveform animation
+  useEffect(() => {
+    if (!isActive || !canvasRef.current) {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      return;
+    }
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
-
-    const drawWaveform = () => {
-      ctx.clearRect(0, 0, width, height);
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.beginPath();
-      ctx.strokeStyle = '#66D3FA';
+      ctx.strokeStyle = isSpeaking ? '#66D3FA' : '#009E60';
       ctx.lineWidth = 2;
 
       const time = Date.now() / 1000;
-      
-      for (let x = 0; x < width; x++) {
-        const y = height / 2 + 
-          Math.sin(x * 0.05 + time * 3) * 15 +
-          Math.sin(x * 0.02 + time * 2) * 10 +
-          Math.sin(x * 0.08 + time * 4) * 5;
-        
-        if (x === 0) {
-          ctx.moveTo(x, y);
-        } else {
-          ctx.lineTo(x, y);
-        }
+      const amp = isSpeaking ? 15 + volumeLevel * 30 : 8;
+
+      for (let x = 0; x < canvas.width; x++) {
+        const y = canvas.height / 2 +
+          Math.sin(x * 0.05 + time * 3) * amp +
+          Math.sin(x * 0.02 + time * 2) * amp * 0.6;
+        x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
-      
+
       ctx.stroke();
-      animationRef.current = requestAnimationFrame(drawWaveform);
+      animationRef.current = requestAnimationFrame(draw);
     };
 
-    drawWaveform();
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [isActive]);
+    draw();
+    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, [isActive, isSpeaking, volumeLevel]);
 
   return (
     <>
-      <button 
-        className={`vapi-orb ${isActive ? 'active' : ''}`}
-        onClick={onToggle}
+      <button
+        className={`vapi-orb ${isActive ? 'active' : ''} ${isConnecting ? 'connecting' : ''} ${isSpeaking ? 'speaking' : ''}`}
+        onClick={handleToggle}
         aria-label="Toggle voice assistant"
+        disabled={isConnecting}
       >
         <div className="orb-inner">
-          {isActive ? (
+          {isConnecting ? (
+            <div className="connecting-spinner" />
+          ) : isActive ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="6" y="4" width="4" height="16" rx="1" />
               <rect x="14" y="4" width="4" height="16" rx="1" />
@@ -76,20 +145,17 @@ export function VapiOrb({ isActive, onToggle }: Props) {
             </svg>
           )}
         </div>
-        {isActive && (
-          <div className="pulse-ring" />
+        {isActive && !isConnecting && (
+          <div className={`pulse-ring ${isSpeaking ? 'speaking' : ''}`} />
         )}
       </button>
 
       {isActive && (
         <div className="waveform-container">
-          <canvas 
-            ref={canvasRef} 
-            width={400} 
-            height={60}
-            className="waveform-canvas"
-          />
-          <p className="listening-text">Listening... Ask about any character or concept</p>
+          <canvas ref={canvasRef} width={400} height={60} className="waveform-canvas" />
+          <p className="listening-text">
+            {isConnecting ? 'Connecting...' : isSpeaking ? 'Speaking...' : 'Listening...'}
+          </p>
         </div>
       )}
     </>
