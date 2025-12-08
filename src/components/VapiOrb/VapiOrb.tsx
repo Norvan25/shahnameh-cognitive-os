@@ -27,7 +27,6 @@ export function VapiOrb({ onTranscript }: Props) {
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [callDuration, setCallDuration] = useState(0);
   const [transcript, setTranscript] = useState<Array<{role: string, text: string}>>([]);
-  const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
@@ -41,18 +40,12 @@ export function VapiOrb({ onTranscript }: Props) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const log = (msg: string) => {
-    console.log(`[VAPI DEBUG] ${msg}`);
-    setDebugInfo(msg);
-  };
-
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
       try {
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-        log('Wake lock acquired');
       } catch (err) {
-        log(`Wake lock failed: ${err}`);
+        console.log('Wake lock failed:', err);
       }
     }
   }, []);
@@ -61,14 +54,12 @@ export function VapiOrb({ onTranscript }: Props) {
     if (wakeLockRef.current) {
       wakeLockRef.current.release();
       wakeLockRef.current = null;
-      log('Wake lock released');
     }
   }, []);
 
   const handleEndCall = useCallback(() => {
     if (window.vapiInstance) {
       window.vapiInstance.stop();
-      log('Call stopped manually');
     }
   }, []);
 
@@ -78,79 +69,59 @@ export function VapiOrb({ onTranscript }: Props) {
     }
   }, [transcript]);
 
-  useEffect(() => {
-    log('VapiOrb mounted, loading SDK...');
-
-    // Add custom styles for VAPI button
-    const style = document.createElement('style');
-    style.id = 'vapi-custom-styles';
-    style.textContent = `
-      /* Target VAPI button container */
-      #vapi-support-btn,
-      .vapi-btn,
-      button[class*="vapi"],
-      [id*="vapi"] button,
-      div[style*="position: fixed"][style*="bottom"] button {
-        width: 64px !important;
-        height: 64px !important;
-        min-width: 64px !important;
-        min-height: 64px !important;
-        border-radius: 50% !important;
-        background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%) !important;
-        border: none !important;
-        cursor: pointer !important;
-        box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
-        position: fixed !important;
-        bottom: 24px !important;
-        right: 24px !important;
-        z-index: 9999 !important;
-      }
-
-      #vapi-support-btn:hover,
-      .vapi-btn:hover {
-        transform: scale(1.05) !important;
-        box-shadow: 0 6px 30px rgba(102, 211, 250, 0.5) !important;
-      }
-
-      /* Hide default icon/content */
-      #vapi-support-btn > *,
-      .vapi-btn > * {
-        opacity: 0 !important;
-      }
-
-      @media (max-width: 768px) {
-        #vapi-support-btn,
-        .vapi-btn {
-          width: 60px !important;
-          height: 60px !important;
-          bottom: 20px !important;
-          right: 20px !important;
-        }
-      }
+  // Function to inject microphone icon into VAPI button
+  const injectMicIcon = useCallback(() => {
+    // Find the VAPI button directly by its class
+    const vapiBtn = document.querySelector('.vapi-btn') as HTMLButtonElement;
+    
+    if (!vapiBtn) return;
+    
+    // Check if we already injected the icon
+    if (vapiBtn.querySelector('.vapi-mic-icon')) return;
+    
+    // Clear existing content and add mic icon
+    vapiBtn.innerHTML = `
+      <svg class="vapi-mic-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;display:block;">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/>
+        <line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
     `;
-    document.head.appendChild(style);
+    
+    // Apply styles directly
+    vapiBtn.style.cssText = `
+      width: 64px !important;
+      height: 64px !important;
+      min-width: 64px !important;
+      min-height: 64px !important;
+      border-radius: 50% !important;
+      background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%) !important;
+      border: none !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
+      position: fixed !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      z-index: 9999 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+    `;
+  }, []);
 
+  useEffect(() => {
     // Load VAPI widget SDK
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
     script.defer = true;
     script.async = true;
 
-    script.onerror = (e) => {
-      log(`ERROR: Failed to load VAPI SDK script: ${e}`);
-    };
-
     script.onload = () => {
-      log('VAPI SDK script loaded');
+      console.log('VAPI SDK loaded');
       
-      if (!window.vapiSDK) {
-        log('ERROR: window.vapiSDK not available after script load');
-        return;
-      }
-
-      log('Initializing VAPI instance...');
-      
-      try {
+      if (window.vapiSDK) {
         window.vapiInstance = window.vapiSDK.run({
           apiKey: VAPI_PUBLIC_KEY,
           assistant: VAPI_ASSISTANT_ID,
@@ -160,33 +131,29 @@ export function VapiOrb({ onTranscript }: Props) {
           },
         });
 
-        log('VAPI instance created');
+        // Inject mic icon after VAPI creates its button
+        // Try multiple times as VAPI might create button asynchronously
+        setTimeout(injectMicIcon, 500);
+        setTimeout(injectMicIcon, 1000);
+        setTimeout(injectMicIcon, 2000);
+        setTimeout(injectMicIcon, 3000);
 
-        // Check for button every second
-        const checkButton = setInterval(() => {
-          const possibleButtons = document.querySelectorAll('button');
-          let found = false;
-          possibleButtons.forEach((btn, i) => {
-            const style = window.getComputedStyle(btn);
-            if (style.position === 'fixed' && parseInt(style.bottom) < 100) {
-              log(`Found potential VAPI button: ${btn.className || btn.id || `button-${i}`}`);
-              found = true;
-            }
-          });
-          if (!found) {
-            log('No fixed-bottom button found yet...');
-          }
-        }, 2000);
+        // Also use MutationObserver to catch dynamic changes
+        const observer = new MutationObserver(() => {
+          injectMicIcon();
+        });
+        
+        observer.observe(document.body, {
+          childList: true,
+          subtree: true,
+        });
 
-        // Stop checking after 15 seconds
-        setTimeout(() => {
-          clearInterval(checkButton);
-          log('Stopped button search');
-        }, 15000);
+        // Disconnect after 10 seconds to avoid performance issues
+        setTimeout(() => observer.disconnect(), 10000);
 
         if (window.vapiInstance) {
           window.vapiInstance.on('call-start', () => {
-            log('EVENT: call-start');
+            console.log('Call started');
             setIsActive(true);
             setCallDuration(0);
             setTranscript([]);
@@ -195,10 +162,13 @@ export function VapiOrb({ onTranscript }: Props) {
             timerRef.current = setInterval(() => {
               setCallDuration(prev => prev + 1);
             }, 1000);
+
+            // Re-inject icon in case button changed
+            setTimeout(injectMicIcon, 100);
           });
 
           window.vapiInstance.on('call-end', () => {
-            log('EVENT: call-end');
+            console.log('Call ended');
             setIsActive(false);
             setIsSpeaking(false);
             releaseWakeLock();
@@ -207,15 +177,15 @@ export function VapiOrb({ onTranscript }: Props) {
               clearInterval(timerRef.current);
               timerRef.current = null;
             }
+
+            setTimeout(injectMicIcon, 100);
           });
 
           window.vapiInstance.on('speech-start', () => {
-            log('EVENT: speech-start');
             setIsSpeaking(true);
           });
 
           window.vapiInstance.on('speech-end', () => {
-            log('EVENT: speech-end');
             setIsSpeaking(false);
           });
 
@@ -223,49 +193,33 @@ export function VapiOrb({ onTranscript }: Props) {
             setVolumeLevel(level);
           });
 
-          window.vapiInstance.on('error', (error: any) => {
-            log(`EVENT: error - ${JSON.stringify(error)}`);
-          });
-
           window.vapiInstance.on('message', (message: any) => {
-            log(`EVENT: message - type=${message.type}, role=${message.role}`);
-            
             if (message.type === 'transcript') {
               const role = message.role === 'assistant' ? 'assistant' : 'user';
               const text = message.transcript;
               
-              log(`Transcript (${message.transcriptType}): [${role}] ${text}`);
-              
               if (message.transcriptType === 'final') {
+                console.log(`Final transcript [${role}]: ${text}`);
                 setTranscript(prev => [...prev, { role, text }]);
                 
                 if (onTranscript) {
-                  log(`Calling onTranscript callback with: "${text}" from ${role}`);
                   onTranscript(text, role);
                 }
               }
             }
           });
-
-          log('All event listeners registered');
         }
-      } catch (err) {
-        log(`ERROR initializing VAPI: ${err}`);
       }
     };
 
     document.body.appendChild(script);
-    log('Script element added to body');
 
     return () => {
-      const styleEl = document.getElementById('vapi-custom-styles');
-      if (styleEl) styleEl.remove();
       if (script.parentNode) script.parentNode.removeChild(script);
       if (timerRef.current) clearInterval(timerRef.current);
       releaseWakeLock();
-      log('VapiOrb unmounted, cleanup done');
     };
-  }, [requestWakeLock, releaseWakeLock, onTranscript]);
+  }, [requestWakeLock, releaseWakeLock, onTranscript, injectMicIcon]);
 
   // Waveform animation
   useEffect(() => {
@@ -347,24 +301,6 @@ export function VapiOrb({ onTranscript }: Props) {
 
   return (
     <>
-      {/* Debug info - visible in corner */}
-      <div style={{
-        position: 'fixed',
-        bottom: '100px',
-        left: '10px',
-        background: 'rgba(0,0,0,0.8)',
-        color: '#66D3FA',
-        padding: '8px 12px',
-        borderRadius: '8px',
-        fontSize: '11px',
-        fontFamily: 'monospace',
-        zIndex: 9999,
-        maxWidth: '300px',
-        wordBreak: 'break-all'
-      }}>
-        DEBUG: {debugInfo}
-      </div>
-
       {/* Active Call HUD */}
       {isActive && (
         <div className="vapi-hud">
