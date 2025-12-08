@@ -15,9 +15,11 @@
     0 0 30px rgba(102, 211, 250, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   width: 300px;
+  max-width: calc(100vw - 48px);
   max-height: 400px;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 @keyframes hudSlideIn {
@@ -54,6 +56,7 @@
   background: #00D9FF;
   animation: dotPulse 1.5s ease-in-out infinite;
   box-shadow: 0 0 10px #00D9FF;
+  flex-shrink: 0;
 }
 
 @keyframes dotPulse {
@@ -83,6 +86,7 @@
   background: rgba(102, 211, 250, 0.1);
   padding: 4px 10px;
   border-radius: 8px;
+  flex-shrink: 0;
 }
 
 /* Waveform */
@@ -167,6 +171,7 @@
   font-size: 13px;
   line-height: 1.4;
   color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
 }
 
 .vapi-transcript-item.assistant .vapi-transcript-text {
@@ -206,6 +211,7 @@
   width: 20px;
   height: 20px;
   color: #E63946;
+  flex-shrink: 0;
 }
 
 .vapi-hud-end-btn span {
@@ -252,7 +258,7 @@
 }
 
 /* ================================
-   MOBILE RESPONSIVE - LARGER TEXT
+   MOBILE RESPONSIVE
    ================================ */
 @media (max-width: 768px) {
   .vapi-hud {
@@ -260,75 +266,84 @@
     right: 16px;
     left: 16px;
     width: auto;
+    max-width: none;
     max-height: 50vh;
-    padding: 20px;
+    padding: 16px;
   }
 
   .vapi-hud-status {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .vapi-hud-timer {
-    font-size: 16px;
-    padding: 6px 12px;
+    font-size: 14px;
+    padding: 4px 8px;
   }
 
   .vapi-hud-dot {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
   }
 
   .vapi-wave-canvas {
-    height: 60px;
+    height: 45px;
   }
 
   .vapi-hud-transcript {
-    max-height: 120px;
-    padding: 12px;
+    max-height: 100px;
+    padding: 10px;
   }
 
   .vapi-transcript-empty {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .vapi-transcript-role {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .vapi-transcript-text {
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 14px;
+    line-height: 1.4;
   }
 
   .vapi-hud-end-btn {
-    padding: 14px;
+    padding: 12px;
   }
 
   .vapi-hud-end-btn svg {
-    width: 22px;
-    height: 22px;
+    width: 18px;
+    height: 18px;
   }
 
   .vapi-hud-end-btn span {
-    font-size: 16px;
+    font-size: 14px;
   }
 }
 
 /* Extra small screens */
 @media (max-width: 380px) {
   .vapi-hud {
-    padding: 16px;
+    padding: 14px;
+    right: 12px;
+    left: 12px;
+    bottom: 90px;
+  }
+
+  .vapi-hud-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
   }
 
   .vapi-hud-status {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .vapi-hud-timer {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .vapi-transcript-text {
-    font-size: 14px;
+    font-size: 13px;
   }
 }
