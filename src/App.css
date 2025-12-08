@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Base Styles */
 * {
   margin: 0;
   padding: 0;
@@ -5,46 +8,79 @@
 }
 
 html, body, #root {
-  height: 100%;
   width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
-.app-container {
-  width: 100vw;
-  height: 100vh;
+body {
+  font-family: 'Poppins', sans-serif;
   background: #0D1326;
-  background-image: url('/neurolinks-bg.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  color: #FFFFFF;
+}
+
+/* ============================================
+   APP CONTAINER
+   ============================================ */
+.app-container {
+  width: 100%;
+  height: 100vh;
   position: relative;
   overflow: hidden;
+  background: 
+    radial-gradient(ellipse at 20% 20%, rgba(102, 211, 250, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(127, 79, 201, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 158, 96, 0.05) 0%, transparent 70%),
+    #0D1326;
 }
 
-/* Header */
-.app-header {
+/* Neurolinks background pattern */
+.app-container::before {
+  content: '';
   position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(102, 211, 250, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 75% 75%, rgba(127, 79, 201, 0.03) 0%, transparent 2%),
+    radial-gradient(circle at 50% 10%, rgba(0, 158, 96, 0.02) 0%, transparent 2%),
+    radial-gradient(circle at 10% 80%, rgba(242, 133, 0, 0.02) 0%, transparent 2%);
+  background-size: 60px 60px, 80px 80px, 100px 100px, 70px 70px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(13, 19, 38, 0.9);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(102, 211, 250, 0.15);
+  z-index: 50;
 }
 
 .header-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .norvan-logo {
   width: 40px;
   height: 40px;
-  opacity: 0.8;
-  transition: opacity 0.2s;
-}
-
-.norvan-logo:hover {
-  opacity: 1;
+  object-fit: contain;
 }
 
 .header-titles {
@@ -53,24 +89,21 @@ html, body, #root {
 }
 
 .title-en {
-  font-family: 'Poppins', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   color: #FFFFFF;
-  margin: 0;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  line-height: 1.2;
 }
 
 .title-fa {
-  font-family: 'Vazirmatn', 'Poppins', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
+  font-family: 'Vazirmatn', sans-serif;
   color: rgba(255, 255, 255, 0.6);
-  margin: 2px 0 0 0;
+  margin-top: 2px;
 }
 
 /* Search */
 .search-container {
-  margin-top: 16px;
   position: relative;
   display: flex;
   align-items: center;
@@ -79,16 +112,16 @@ html, body, #root {
 
 .search-input {
   width: 220px;
-  padding: 10px 36px 10px 14px;
-  background: rgba(13, 19, 38, 0.85);
-  border: 1px solid rgba(102, 211, 250, 0.3);
+  padding: 10px 16px;
+  padding-right: 36px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
   color: #FFFFFF;
   font-family: 'Poppins', sans-serif;
   font-size: 14px;
   outline: none;
-  transition: border-color 0.2s;
-  backdrop-filter: blur(10px);
+  transition: all 0.2s;
 }
 
 .search-input::placeholder {
@@ -97,18 +130,18 @@ html, body, #root {
 
 .search-input:focus {
   border-color: #66D3FA;
-  box-shadow: 0 0 15px rgba(102, 211, 250, 0.2);
+  background: rgba(102, 211, 250, 0.05);
 }
 
 .search-clear {
   position: absolute;
-  right: 70px;
+  right: 60px;
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.5);
   font-size: 20px;
   cursor: pointer;
-  padding: 0 8px;
+  padding: 4px 8px;
 }
 
 .search-clear:hover {
@@ -116,150 +149,98 @@ html, body, #root {
 }
 
 .search-count {
-  font-family: 'Poppins', sans-serif;
   font-size: 12px;
   color: #66D3FA;
   white-space: nowrap;
 }
 
-/* Graph Container - FULL VIEWPORT */
-.graph-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.cognitive-graph {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-/* Legend */
+/* ============================================
+   LEGEND
+   ============================================ */
 .legend {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
+  position: fixed;
+  top: 88px;
+  left: 24px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: rgba(13, 19, 38, 0.85);
-  padding: 12px;
-  border-radius: 8px;
+  gap: 10px;
+  padding: 16px;
+  background: rgba(13, 19, 38, 0.8);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  z-index: 10;
+  z-index: 40;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.7);
+  gap: 10px;
 }
 
 .legend-line {
-  width: 20px;
+  width: 24px;
   height: 3px;
   border-radius: 2px;
 }
 
 .legend-line.heals {
   background: #009E60;
-  box-shadow: 0 0 6px #009E60;
 }
 
 .legend-line.conflicts {
   background: #E63946;
-  box-shadow: 0 0 6px #E63946;
 }
 
 .legend-line.corrupts {
   background: #7F4FC9;
-  box-shadow: 0 0 6px #7F4FC9;
+  background: repeating-linear-gradient(
+    90deg,
+    #7F4FC9 0px,
+    #7F4FC9 4px,
+    transparent 4px,
+    transparent 8px
+  );
 }
 
 .legend-line.serves {
-  background: rgba(102, 211, 250, 0.8);
-  box-shadow: 0 0 6px rgba(102, 211, 250, 0.5);
+  background: rgba(102, 211, 250, 0.5);
 }
 
-/* Node styles */
-.node {
-  cursor: pointer;
+.legend span:last-child {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
-.node.dimmed {
-  opacity: 0.2;
+/* ============================================
+   GRAPH CONTAINER
+   ============================================ */
+.graph-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
 }
 
-.node.highlighted {
-  filter: drop-shadow(0 0 10px #66D3FA);
+.cognitive-graph {
+  width: 100%;
+  height: 100%;
 }
 
-.glow-ring {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    stroke-opacity: 0.4;
-    transform: scale(1);
-  }
-  50% {
-    stroke-opacity: 0.8;
-    transform: scale(1.05);
-  }
-}
-
-/* Awareness node special glow */
-.awareness-glow {
-  animation: awareness-pulse 2s ease-in-out infinite;
-}
-
-@keyframes awareness-pulse {
-  0%, 100% {
-    opacity: 0.3;
-    r: 70;
-  }
-  50% {
-    opacity: 0.6;
-    r: 80;
-  }
-}
-
-/* Labels */
-.label-en {
-  pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
-.label-fa {
-  pointer-events: none;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
-/* Links */
-.links line {
-  stroke-linecap: round;
-}
-
-.links line.dimmed {
-  opacity: 0.1;
-}
-
-/* Mobile Responsive */
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
   .app-header {
-    top: 12px;
-    left: 12px;
-    right: 12px;
+    height: 64px;
+    padding: 0 16px;
+    flex-wrap: wrap;
+  }
+
+  .header-brand {
+    gap: 12px;
   }
 
   .norvan-logo {
@@ -272,24 +253,83 @@ html, body, #root {
   }
 
   .title-fa {
-    font-size: 11px;
+    font-size: 12px;
+  }
+
+  .search-container {
+    position: fixed;
+    top: 72px;
+    left: 16px;
+    right: 16px;
+    padding: 8px 0;
   }
 
   .search-input {
     width: 100%;
-    max-width: 240px;
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 12px 16px;
+  }
+
+  .search-clear {
+    right: 48px;
   }
 
   .legend {
-    bottom: 80px;
-    left: 12px;
-    padding: 10px;
+    top: auto;
+    bottom: 100px;
+    left: 16px;
+    padding: 12px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
   }
 
   .legend-item {
+    gap: 6px;
+  }
+
+  .legend-line {
+    width: 18px;
+    height: 3px;
+  }
+
+  .legend span:last-child {
+    font-size: 11px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  .title-en {
+    font-size: 14px;
+  }
+
+  .title-fa {
+    display: none;
+  }
+
+  .legend {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .legend span:last-child {
     font-size: 10px;
   }
 }
 
-/* Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* ============================================
+   VOICE HIGHLIGHT ANIMATION
+   ============================================ */
+@keyframes voicePulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+  50% {
+    filter: drop-shadow(0 0 20px currentColor) drop-shadow(0 0 30px currentColor);
+  }
+}
+
+.voice-highlighted {
+  animation: voicePulse 1s ease-in-out infinite;
+}
