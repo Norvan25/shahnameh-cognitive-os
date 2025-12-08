@@ -12,7 +12,7 @@
   position: fixed;
   top: 0;
   right: 0;
-  width: 380px;
+  width: 420px;
   height: 100vh;
   background: rgba(13, 19, 38, 0.95);
   backdrop-filter: blur(10px);
@@ -39,10 +39,10 @@
   background: none;
   border: none;
   color: rgba(255, 255, 255, 0.6);
-  font-size: 28px;
+  font-size: 32px;
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,8 +58,8 @@
 .panel-header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 24px;
+  gap: 20px;
+  padding: 28px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -72,29 +72,32 @@
   min-width: 0;
 }
 
+/* INCREASED: Character name */
 .name-en {
   font-family: 'Poppins', sans-serif;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   color: #FFFFFF;
   margin: 0;
+  line-height: 1.2;
 }
 
+/* INCREASED: Persian name */
 .name-fa {
   font-family: 'Vazirmatn', sans-serif;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.6);
-  margin: 4px 0 0 0;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 6px 0 0 0;
 }
 
 .panel-content {
   flex: 1;
   overflow-y: auto;
-  padding: 0 24px 24px;
+  padding: 0 28px 28px;
 }
 
 .panel-section {
-  padding: 20px 0;
+  padding: 24px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -102,21 +105,23 @@
   border-bottom: none;
 }
 
+/* INCREASED: Section headers */
 .panel-section h3 {
   font-family: 'Poppins', sans-serif;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #66D3FA;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin: 0 0 12px 0;
+  letter-spacing: 0.15em;
+  margin: 0 0 14px 0;
 }
 
+/* INCREASED: Description text */
 .panel-section p {
   font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
-  line-height: 1.6;
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
   margin: 0;
 }
 
@@ -124,39 +129,40 @@
 .strength-bars {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 
 .strength-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
+/* INCREASED: Strength text */
 .strength-text {
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .strength-bar {
-  height: 4px;
+  height: 5px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  border-radius: 3px;
   overflow: hidden;
 }
 
 .strength-fill {
   height: 100%;
-  border-radius: 2px;
+  border-radius: 3px;
   transition: width 0.5s ease-out;
 }
 
 /* Shadow Section */
 .shadow-section {
   background: rgba(230, 57, 70, 0.1);
-  margin: 20px -24px;
-  padding: 20px 24px !important;
+  margin: 24px -28px;
+  padding: 24px 28px !important;
   border: none !important;
 }
 
@@ -164,8 +170,10 @@
   color: #E63946;
 }
 
+/* INCREASED: Shadow text */
 .shadow-text {
-  color: rgba(230, 57, 70, 0.9) !important;
+  color: rgba(230, 57, 70, 0.95) !important;
+  font-size: 16px !important;
 }
 
 /* Lists */
@@ -176,23 +184,27 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* INCREASED: List items */
 .connections-list li,
 .dependencies-list li {
   font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.7);
-  padding: 6px 0;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px 0;
+  line-height: 1.5;
 }
 
 .more-connections {
-  color: rgba(255, 255, 255, 0.4) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
   font-style: italic;
 }
 
-/* Mobile Styles - Bottom Sheet */
+/* ============================================
+   MOBILE STYLES - EVEN LARGER TEXT
+   ============================================ */
 @media (max-width: 768px) {
   .info-panel {
     top: auto;
@@ -200,11 +212,11 @@
     left: 0;
     right: 0;
     width: 100%;
-    height: 70vh;
-    max-height: 70vh;
+    height: 75vh;
+    max-height: 75vh;
     border-left: none;
     border-top: 1px solid rgba(102, 211, 250, 0.2);
-    border-radius: 20px 20px 0 0;
+    border-radius: 24px 24px 0 0;
     animation: slideInUp 0.2s ease-out;
   }
 
@@ -218,19 +230,92 @@
   }
 
   .panel-header {
-    padding: 20px 16px;
+    padding: 24px 20px;
   }
 
   .panel-content {
-    padding: 0 16px 100px;
+    padding: 0 20px 120px;
   }
 
+  .close-btn {
+    font-size: 36px;
+    width: 48px;
+    height: 48px;
+  }
+
+  /* MOBILE: Character name - MUCH LARGER */
   .name-en {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  /* MOBILE: Persian name */
+  .name-fa {
+    font-size: 20px;
+    margin-top: 8px;
+  }
+
+  /* MOBILE: Section headers */
+  .panel-section h3 {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  /* MOBILE: Description text - MUCH LARGER */
+  .panel-section p {
+    font-size: 18px;
+    line-height: 1.8;
+  }
+
+  /* MOBILE: Strength text */
+  .strength-text {
+    font-size: 17px;
+  }
+
+  .strength-bars {
+    gap: 16px;
+  }
+
+  /* MOBILE: Shadow section */
+  .shadow-section {
+    margin: 24px -20px;
+    padding: 20px !important;
+  }
+
+  .shadow-text {
+    font-size: 17px !important;
+  }
+
+  /* MOBILE: List items - LARGER */
+  .connections-list li,
+  .dependencies-list li {
+    font-size: 17px;
+    padding: 10px 0;
+    line-height: 1.6;
+  }
+
+  .connections-list,
+  .dependencies-list {
+    gap: 8px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  .name-en {
+    font-size: 24px;
+  }
+
+  .name-fa {
     font-size: 18px;
   }
 
-  .shadow-section {
-    margin: 20px -16px;
-    padding: 16px !important;
+  .panel-section p {
+    font-size: 17px;
+  }
+
+  .connections-list li,
+  .dependencies-list li {
+    font-size: 16px;
   }
 }
