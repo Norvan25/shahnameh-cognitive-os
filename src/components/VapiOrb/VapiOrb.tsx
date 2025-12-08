@@ -21,29 +21,19 @@ const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
-// Microphone SVG icon
-const MIC_ICON_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;">
-  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-  <line x1="12" y1="19" x2="12" y2="23"/>
-  <line x1="8" y1="23" x2="16" y2="23"/>
-</svg>
-`;
-
 export function VapiOrb({ onTranscript }: Props) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [callDuration, setCallDuration] = useState(0);
   const [transcript, setTranscript] = useState<Array<{role: string, text: string}>>([]);
+  const [debugInfo, setDebugInfo] = useState<string>('Initializing...');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wakeLockRef = useRef<any>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
-  const observerRef = useRef<MutationObserver | null>(null);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -51,13 +41,18 @@ export function VapiOrb({ onTranscript }: Props) {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const log = (msg: string) => {
+    console.log(`[VAPI DEBUG] ${msg}`);
+    setDebugInfo(msg);
+  };
+
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
       try {
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
-        console.log('Wake lock acquired');
+        log('Wake lock acquired');
       } catch (err) {
-        console.log('Wake lock failed:', err);
+        log(`Wake lock failed: ${err}`);
       }
     }
   }, []);
@@ -66,12 +61,14 @@ export function VapiOrb({ onTranscript }: Props) {
     if (wakeLockRef.current) {
       wakeLockRef.current.release();
       wakeLockRef.current = null;
+      log('Wake lock released');
     }
   }, []);
 
   const handleEndCall = useCallback(() => {
     if (window.vapiInstance) {
       window.vapiInstance.stop();
+      log('Call stopped manually');
     }
   }, []);
 
@@ -81,27 +78,19 @@ export function VapiOrb({ onTranscript }: Props) {
     }
   }, [transcript]);
 
-  // Function to override VAPI button appearance
-  const overrideVapiButton = useCallback(() => {
-    // Find the VAPI button - try multiple selectors
-    const selectors = [
-      '#vapi-support-btn',
-      '.vapi-btn',
-      'button[class*="vapi"]',
-      '[data-vapi]',
-      'div[id*="vapi"] button',
-    ];
+  useEffect(() => {
+    log('VapiOrb mounted, loading SDK...');
 
-    let vapiButton: HTMLElement | null = null;
-    
-    for (const selector of selectors) {
-      vapiButton = document.querySelector(selector);
-      if (vapiButton) break;
-    }
-
-    if (vapiButton) {
-      // Apply our styles
-      vapiButton.style.cssText = `
+    // Add custom styles for VAPI button
+    const style = document.createElement('style');
+    style.id = 'vapi-custom-styles';
+    style.textContent = `
+      /* Target VAPI button container */
+      #vapi-support-btn,
+      .vapi-btn,
+      button[class*="vapi"],
+      [id*="vapi"] button,
+      div[style*="position: fixed"][style*="bottom"] button {
         width: 64px !important;
         height: 64px !important;
         min-width: 64px !important;
@@ -111,45 +100,10 @@ export function VapiOrb({ onTranscript }: Props) {
         border: none !important;
         cursor: pointer !important;
         box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
+        position: fixed !important;
         bottom: 24px !important;
         right: 24px !important;
-        position: fixed !important;
-        z-index: 100 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        padding: 0 !important;
-        overflow: visible !important;
-      `;
-
-      // Clear inner content and add mic icon
-      vapiButton.innerHTML = MIC_ICON_SVG;
-
-      console.log('VAPI button override applied');
-      return true;
-    }
-    return false;
-  }, []);
-
-  useEffect(() => {
-    // Inject base styles
-    const style = document.createElement('style');
-    style.id = 'vapi-custom-styles';
-    style.textContent = `
-      #vapi-support-btn,
-      .vapi-btn,
-      button[class*="vapi"],
-      [data-vapi] button {
-        width: 64px !important;
-        height: 64px !important;
-        border-radius: 50% !important;
-        background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%) !important;
-        border: none !important;
-        box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
-        bottom: 24px !important;
-        right: 24px !important;
-        position: fixed !important;
-        z-index: 100 !important;
+        z-index: 9999 !important;
       }
 
       #vapi-support-btn:hover,
@@ -158,16 +112,15 @@ export function VapiOrb({ onTranscript }: Props) {
         box-shadow: 0 6px 30px rgba(102, 211, 250, 0.5) !important;
       }
 
-      #vapi-support-btn.vapi-btn-is-active,
-      .vapi-btn.vapi-btn-is-active {
-        background: linear-gradient(135deg, #009E60 0%, #007ACC 100%) !important;
-        box-shadow: 0 4px 20px rgba(0, 158, 96, 0.4) !important;
+      /* Hide default icon/content */
+      #vapi-support-btn > *,
+      .vapi-btn > * {
+        opacity: 0 !important;
       }
 
       @media (max-width: 768px) {
         #vapi-support-btn,
-        .vapi-btn,
-        button[class*="vapi"] {
+        .vapi-btn {
           width: 60px !important;
           height: 60px !important;
           bottom: 20px !important;
@@ -177,35 +130,27 @@ export function VapiOrb({ onTranscript }: Props) {
     `;
     document.head.appendChild(style);
 
-    // Use MutationObserver to detect when VAPI adds its button
-    observerRef.current = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.addedNodes.length) {
-          const success = overrideVapiButton();
-          if (success) {
-            // Keep observing for class changes (active state)
-          }
-        }
-      }
-    });
-
-    observerRef.current.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['class'],
-    });
-
     // Load VAPI widget SDK
     const script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
     script.defer = true;
     script.async = true;
 
+    script.onerror = (e) => {
+      log(`ERROR: Failed to load VAPI SDK script: ${e}`);
+    };
+
     script.onload = () => {
-      console.log('VAPI SDK loaded');
+      log('VAPI SDK script loaded');
       
-      if (window.vapiSDK) {
+      if (!window.vapiSDK) {
+        log('ERROR: window.vapiSDK not available after script load');
+        return;
+      }
+
+      log('Initializing VAPI instance...');
+      
+      try {
         window.vapiInstance = window.vapiSDK.run({
           apiKey: VAPI_PUBLIC_KEY,
           assistant: VAPI_ASSISTANT_ID,
@@ -215,24 +160,33 @@ export function VapiOrb({ onTranscript }: Props) {
           },
         });
 
-        // Try to override button after a short delay
-        setTimeout(() => {
-          overrideVapiButton();
-        }, 500);
+        log('VAPI instance created');
 
-        // Keep trying periodically
-        const retryInterval = setInterval(() => {
-          overrideVapiButton();
-        }, 1000);
+        // Check for button every second
+        const checkButton = setInterval(() => {
+          const possibleButtons = document.querySelectorAll('button');
+          let found = false;
+          possibleButtons.forEach((btn, i) => {
+            const style = window.getComputedStyle(btn);
+            if (style.position === 'fixed' && parseInt(style.bottom) < 100) {
+              log(`Found potential VAPI button: ${btn.className || btn.id || `button-${i}`}`);
+              found = true;
+            }
+          });
+          if (!found) {
+            log('No fixed-bottom button found yet...');
+          }
+        }, 2000);
 
-        // Stop retrying after 10 seconds
+        // Stop checking after 15 seconds
         setTimeout(() => {
-          clearInterval(retryInterval);
-        }, 10000);
+          clearInterval(checkButton);
+          log('Stopped button search');
+        }, 15000);
 
         if (window.vapiInstance) {
           window.vapiInstance.on('call-start', () => {
-            console.log('Call started');
+            log('EVENT: call-start');
             setIsActive(true);
             setCallDuration(0);
             setTranscript([]);
@@ -241,13 +195,10 @@ export function VapiOrb({ onTranscript }: Props) {
             timerRef.current = setInterval(() => {
               setCallDuration(prev => prev + 1);
             }, 1000);
-
-            // Re-apply button style for active state
-            setTimeout(overrideVapiButton, 100);
           });
 
           window.vapiInstance.on('call-end', () => {
-            console.log('Call ended');
+            log('EVENT: call-end');
             setIsActive(false);
             setIsSpeaking(false);
             releaseWakeLock();
@@ -256,15 +207,15 @@ export function VapiOrb({ onTranscript }: Props) {
               clearInterval(timerRef.current);
               timerRef.current = null;
             }
-
-            setTimeout(overrideVapiButton, 100);
           });
 
           window.vapiInstance.on('speech-start', () => {
+            log('EVENT: speech-start');
             setIsSpeaking(true);
           });
 
           window.vapiInstance.on('speech-end', () => {
+            log('EVENT: speech-end');
             setIsSpeaking(false);
           });
 
@@ -272,37 +223,49 @@ export function VapiOrb({ onTranscript }: Props) {
             setVolumeLevel(level);
           });
 
+          window.vapiInstance.on('error', (error: any) => {
+            log(`EVENT: error - ${JSON.stringify(error)}`);
+          });
+
           window.vapiInstance.on('message', (message: any) => {
-            console.log('VAPI message:', message);
+            log(`EVENT: message - type=${message.type}, role=${message.role}`);
             
             if (message.type === 'transcript') {
               const role = message.role === 'assistant' ? 'assistant' : 'user';
               const text = message.transcript;
               
+              log(`Transcript (${message.transcriptType}): [${role}] ${text}`);
+              
               if (message.transcriptType === 'final') {
                 setTranscript(prev => [...prev, { role, text }]);
                 
                 if (onTranscript) {
+                  log(`Calling onTranscript callback with: "${text}" from ${role}`);
                   onTranscript(text, role);
                 }
               }
             }
           });
+
+          log('All event listeners registered');
         }
+      } catch (err) {
+        log(`ERROR initializing VAPI: ${err}`);
       }
     };
 
     document.body.appendChild(script);
+    log('Script element added to body');
 
     return () => {
       const styleEl = document.getElementById('vapi-custom-styles');
       if (styleEl) styleEl.remove();
       if (script.parentNode) script.parentNode.removeChild(script);
       if (timerRef.current) clearInterval(timerRef.current);
-      if (observerRef.current) observerRef.current.disconnect();
       releaseWakeLock();
+      log('VapiOrb unmounted, cleanup done');
     };
-  }, [requestWakeLock, releaseWakeLock, onTranscript, overrideVapiButton]);
+  }, [requestWakeLock, releaseWakeLock, onTranscript]);
 
   // Waveform animation
   useEffect(() => {
@@ -384,6 +347,24 @@ export function VapiOrb({ onTranscript }: Props) {
 
   return (
     <>
+      {/* Debug info - visible in corner */}
+      <div style={{
+        position: 'fixed',
+        bottom: '100px',
+        left: '10px',
+        background: 'rgba(0,0,0,0.8)',
+        color: '#66D3FA',
+        padding: '8px 12px',
+        borderRadius: '8px',
+        fontSize: '11px',
+        fontFamily: 'monospace',
+        zIndex: 9999,
+        maxWidth: '300px',
+        wordBreak: 'break-all'
+      }}>
+        DEBUG: {debugInfo}
+      </div>
+
       {/* Active Call HUD */}
       {isActive && (
         <div className="vapi-hud">
