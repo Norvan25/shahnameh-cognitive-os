@@ -1,25 +1,222 @@
-/* Active Call HUD */
+/* ============================================================
+   VAPI CALL BUTTON
+   ============================================================ */
+
+.vapi-call-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  
+  /* Flexbox for icon centering */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Base styling */
+  background: transparent;
+  padding: 0;
+  outline: none;
+  
+  /* Smooth transitions */
+  transition: transform 0.2s ease;
+}
+
+.vapi-call-btn:hover {
+  transform: scale(1.05);
+}
+
+.vapi-call-btn:active {
+  transform: scale(0.95);
+}
+
+.vapi-call-btn:disabled {
+  cursor: wait;
+}
+
+/* ==================== GLOW RINGS ==================== */
+
+.vapi-call-btn__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: 0.4;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.vapi-call-btn__inner-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+/* ==================== ICON ==================== */
+
+.vapi-call-btn__icon {
+  position: relative;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vapi-call-btn__icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* ============================================================
+   BUTTON STATES
+   ============================================================ */
+
+/* ==================== IDLE STATE (Cyan, Mic Icon) ==================== */
+
+.vapi-call-btn--idle {
+  color: white;
+}
+
+.vapi-call-btn--idle .vapi-call-btn__glow {
+  background: radial-gradient(circle, rgba(102, 211, 250, 0.6) 0%, rgba(102, 211, 250, 0) 70%);
+  animation: pulseGlowCyan 2s ease-in-out infinite;
+}
+
+.vapi-call-btn--idle .vapi-call-btn__inner-glow {
+  background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%);
+  box-shadow: 
+    0 4px 20px rgba(102, 211, 250, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+@keyframes pulseGlowCyan {
+  0%, 100% {
+    opacity: 0.4;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* ==================== CONNECTING STATE (Pulsing) ==================== */
+
+.vapi-call-btn--connecting {
+  color: white;
+}
+
+.vapi-call-btn--connecting .vapi-call-btn__glow {
+  background: radial-gradient(circle, rgba(102, 211, 250, 0.6) 0%, rgba(102, 211, 250, 0) 70%);
+  animation: pulseGlowConnecting 0.8s ease-in-out infinite;
+}
+
+.vapi-call-btn--connecting .vapi-call-btn__inner-glow {
+  background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%);
+  box-shadow: 0 4px 20px rgba(102, 211, 250, 0.5);
+  animation: pulseInnerConnecting 0.8s ease-in-out infinite;
+}
+
+@keyframes pulseGlowConnecting {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+}
+
+@keyframes pulseInnerConnecting {
+  0%, 100% {
+    opacity: 0.8;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ==================== ACTIVE STATE (Red, End Call Icon) ==================== */
+
+.vapi-call-btn--active {
+  color: white;
+}
+
+.vapi-call-btn--active .vapi-call-btn__glow {
+  background: radial-gradient(circle, rgba(230, 57, 70, 0.6) 0%, rgba(230, 57, 70, 0) 70%);
+  animation: pulseGlowRed 1.5s ease-in-out infinite;
+}
+
+.vapi-call-btn--active .vapi-call-btn__inner-glow {
+  background: linear-gradient(135deg, #E63946 0%, #C62828 100%);
+  box-shadow: 
+    0 4px 20px rgba(230, 57, 70, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulseGlowRed {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+/* ============================================================
+   ACTIVE CALL HUD
+   ============================================================ */
+
 .vapi-hud {
   position: fixed;
   bottom: 100px;
   right: 24px;
+  width: 300px;
+  max-width: calc(100vw - 48px);
+  max-height: 400px;
+  
+  /* Styling */
   background: linear-gradient(135deg, rgba(13, 19, 38, 0.98) 0%, rgba(19, 34, 56, 0.98) 100%);
   backdrop-filter: blur(16px);
   border-radius: 20px;
   border: 1px solid rgba(102, 211, 250, 0.25);
   padding: 18px;
-  z-index: 99;
-  animation: hudSlideIn 0.3s ease-out;
+  
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  
+  /* Effects */
   box-shadow: 
     0 10px 40px rgba(0, 0, 0, 0.5),
     0 0 30px rgba(102, 211, 250, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  width: 300px;
-  max-width: calc(100vw - 48px);
-  max-height: 400px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
+  
+  /* Animation */
+  animation: hudSlideIn 0.3s ease-out;
+  z-index: 999;
 }
 
 @keyframes hudSlideIn {
@@ -33,195 +230,7 @@
   }
 }
 
-/* Header */
-.vapi-hud-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(102, 211, 250, 0.15);
-}
-
-.vapi-hud-indicator {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.vapi-hud-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #00D9FF;
-  animation: dotPulse 1.5s ease-in-out infinite;
-  box-shadow: 0 0 10px #00D9FF;
-  flex-shrink: 0;
-}
-
-@keyframes dotPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-}
-
-.vapi-hud-status {
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.95);
-  letter-spacing: 0.3px;
-}
-
-.vapi-hud-timer {
-  font-family: 'Poppins', monospace;
-  font-size: 14px;
-  font-weight: 600;
-  color: #66D3FA;
-  background: rgba(102, 211, 250, 0.1);
-  padding: 4px 10px;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-/* Waveform */
-.vapi-hud-wave {
-  position: relative;
-  overflow: hidden;
-  border-radius: 10px;
-  background: rgba(0, 0, 0, 0.25);
-  margin-bottom: 14px;
-}
-
-.vapi-wave-canvas {
-  display: block;
-  width: 100%;
-  height: 50px;
-}
-
-/* Transcript */
-.vapi-hud-transcript {
-  flex: 1;
-  overflow-y: auto;
-  max-height: 150px;
-  margin-bottom: 14px;
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(102, 211, 250, 0.3) transparent;
-}
-
-.vapi-hud-transcript::-webkit-scrollbar {
-  width: 4px;
-}
-
-.vapi-hud-transcript::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.vapi-hud-transcript::-webkit-scrollbar-thumb {
-  background: rgba(102, 211, 250, 0.3);
-  border-radius: 2px;
-}
-
-.vapi-transcript-empty {
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: center;
-  margin: 0;
-  padding: 15px 0;
-}
-
-.vapi-transcript-item {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 10px;
-  animation: transcriptFadeIn 0.3s ease-out;
-}
-
-.vapi-transcript-item:last-child {
-  margin-bottom: 0;
-}
-
-@keyframes transcriptFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.vapi-transcript-role {
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.vapi-transcript-text {
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.85);
-  word-break: break-word;
-}
-
-.vapi-transcript-item.assistant .vapi-transcript-text {
-  color: #66D3FA;
-}
-
-.vapi-transcript-item.user .vapi-transcript-text {
-  color: #00D9FF;
-}
-
-/* End Call Button */
-.vapi-hud-end-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, rgba(230, 57, 70, 0.2) 0%, rgba(230, 57, 70, 0.1) 100%);
-  border: 1px solid rgba(230, 57, 70, 0.4);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.vapi-hud-end-btn:hover {
-  background: linear-gradient(135deg, rgba(230, 57, 70, 0.3) 0%, rgba(230, 57, 70, 0.2) 100%);
-  border-color: rgba(230, 57, 70, 0.6);
-  transform: scale(1.02);
-}
-
-.vapi-hud-end-btn:active {
-  transform: scale(0.98);
-}
-
-.vapi-hud-end-btn svg {
-  width: 20px;
-  height: 20px;
-  color: #E63946;
-  flex-shrink: 0;
-}
-
-.vapi-hud-end-btn span {
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  color: #E63946;
-}
-
-/* Glow effect */
+/* Glow border effect */
 .vapi-hud::before {
   content: '';
   position: absolute;
@@ -230,7 +239,7 @@
   right: -2px;
   bottom: -2px;
   border-radius: 22px;
-  background: linear-gradient(135deg, rgba(102, 211, 250, 0.2), transparent, rgba(0, 158, 96, 0.2));
+  background: linear-gradient(135deg, rgba(102, 211, 250, 0.3), transparent, rgba(0, 158, 96, 0.3));
   z-index: -1;
   animation: hudGlow 3s ease-in-out infinite;
 }
@@ -255,14 +264,243 @@
   border-top: 2px solid rgba(102, 211, 250, 0.25);
   border-right: 2px solid rgba(102, 211, 250, 0.25);
   border-radius: 0 10px 0 0;
+  pointer-events: none;
 }
 
-/* ================================
+/* ==================== HUD HEADER ==================== */
+
+.vapi-hud__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(102, 211, 250, 0.15);
+}
+
+.vapi-hud__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vapi-hud__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00D9FF;
+  box-shadow: 0 0 10px #00D9FF;
+  flex-shrink: 0;
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dotPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.vapi-hud__label {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.3px;
+}
+
+.vapi-hud__timer {
+  font-family: 'Poppins', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: #66D3FA;
+  background: rgba(102, 211, 250, 0.1);
+  padding: 4px 10px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* ==================== HUD WAVEFORM ==================== */
+
+.vapi-hud__wave {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  margin-bottom: 14px;
+}
+
+.vapi-hud__canvas {
+  display: block;
+  width: 100%;
+  height: 50px;
+}
+
+/* ==================== HUD TRANSCRIPT ==================== */
+
+.vapi-hud__transcript {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 150px;
+  margin-bottom: 14px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+  
+  /* Scrollbar styling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(102, 211, 250, 0.3) transparent;
+}
+
+.vapi-hud__transcript::-webkit-scrollbar {
+  width: 4px;
+}
+
+.vapi-hud__transcript::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vapi-hud__transcript::-webkit-scrollbar-thumb {
+  background: rgba(102, 211, 250, 0.3);
+  border-radius: 2px;
+}
+
+.vapi-hud__empty {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  margin: 0;
+  padding: 15px 0;
+}
+
+.vapi-hud__message {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  animation: messageFadeIn 0.3s ease-out;
+}
+
+.vapi-hud__message:last-of-type {
+  margin-bottom: 0;
+}
+
+@keyframes messageFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vapi-hud__message-icon {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.vapi-hud__message-text {
+  font-family: 'Poppins', sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.85);
+  word-break: break-word;
+}
+
+.vapi-hud__message--assistant .vapi-hud__message-text {
+  color: #66D3FA;
+}
+
+.vapi-hud__message--user .vapi-hud__message-text {
+  color: #00D9FF;
+}
+
+/* ==================== HUD END BUTTON ==================== */
+
+.vapi-hud__end-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  
+  /* Styling */
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.2) 0%, rgba(230, 57, 70, 0.1) 100%);
+  border: 1px solid rgba(230, 57, 70, 0.4);
+  border-radius: 12px;
+  cursor: pointer;
+  
+  /* Transition */
+  transition: all 0.2s ease;
+}
+
+.vapi-hud__end-btn:hover {
+  background: linear-gradient(135deg, rgba(230, 57, 70, 0.3) 0%, rgba(230, 57, 70, 0.2) 100%);
+  border-color: rgba(230, 57, 70, 0.6);
+  transform: scale(1.02);
+}
+
+.vapi-hud__end-btn:active {
+  transform: scale(0.98);
+}
+
+.vapi-hud__end-btn svg {
+  width: 20px;
+  height: 20px;
+  color: #E63946;
+  flex-shrink: 0;
+}
+
+.vapi-hud__end-btn span {
+  font-family: 'Poppins', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #E63946;
+}
+
+/* ============================================================
    MOBILE RESPONSIVE
-   ================================ */
+   ============================================================ */
+
 @media (max-width: 768px) {
+  /* Button */
+  .vapi-call-btn {
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .vapi-call-btn__glow {
+    width: 76px;
+    height: 76px;
+  }
+
+  .vapi-call-btn__inner-glow {
+    width: 60px;
+    height: 60px;
+  }
+
+  .vapi-call-btn__icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .vapi-call-btn__icon svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  /* HUD */
   .vapi-hud {
-    bottom: 96px;
+    bottom: 92px;
     right: 16px;
     left: 16px;
     width: auto;
@@ -271,79 +509,86 @@
     padding: 16px;
   }
 
-  .vapi-hud-status {
+  .vapi-hud__label {
     font-size: 15px;
   }
 
-  .vapi-hud-timer {
+  .vapi-hud__timer {
     font-size: 14px;
     padding: 4px 8px;
   }
 
-  .vapi-hud-dot {
-    width: 10px;
-    height: 10px;
-  }
-
-  .vapi-wave-canvas {
+  .vapi-hud__canvas {
     height: 45px;
   }
 
-  .vapi-hud-transcript {
+  .vapi-hud__transcript {
     max-height: 100px;
     padding: 10px;
   }
 
-  .vapi-transcript-empty {
+  .vapi-hud__empty {
     font-size: 14px;
   }
 
-  .vapi-transcript-role {
+  .vapi-hud__message-text {
     font-size: 14px;
   }
 
-  .vapi-transcript-text {
-    font-size: 14px;
-    line-height: 1.4;
-  }
-
-  .vapi-hud-end-btn {
+  .vapi-hud__end-btn {
     padding: 12px;
   }
 
-  .vapi-hud-end-btn svg {
+  .vapi-hud__end-btn svg {
     width: 18px;
     height: 18px;
   }
 
-  .vapi-hud-end-btn span {
+  .vapi-hud__end-btn span {
     font-size: 14px;
   }
 }
 
 /* Extra small screens */
 @media (max-width: 380px) {
-  .vapi-hud {
-    padding: 14px;
-    right: 12px;
-    left: 12px;
-    bottom: 90px;
+  .vapi-call-btn {
+    bottom: 16px;
+    right: 16px;
+    width: 56px;
+    height: 56px;
   }
 
-  .vapi-hud-header {
+  .vapi-call-btn__glow {
+    width: 72px;
+    height: 72px;
+  }
+
+  .vapi-call-btn__inner-glow {
+    width: 56px;
+    height: 56px;
+  }
+
+  .vapi-hud {
+    bottom: 84px;
+    right: 12px;
+    left: 12px;
+    padding: 14px;
+  }
+
+  .vapi-hud__header {
     margin-bottom: 10px;
     padding-bottom: 10px;
   }
 
-  .vapi-hud-status {
+  .vapi-hud__label {
     font-size: 13px;
   }
 
-  .vapi-hud-timer {
+  .vapi-hud__timer {
     font-size: 12px;
   }
 
-  .vapi-transcript-text {
+  .vapi-hud__message-text {
     font-size: 13px;
   }
 }
