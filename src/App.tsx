@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { CognitiveGraph } from './components/Graph/CognitiveGraph';
 import { InfoPanel } from './components/InfoPanel/InfoPanel';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
-import { TesseractMesh } from './components/Background/TesseractMesh';
 import { shahnamehData } from './data/shahnameh-graph';
 import type { CognitiveNode } from './types/graph.types';
 import './App.css';
@@ -97,8 +96,7 @@ function App() {
 
   return (
     <div className="app-container">
-      <TesseractMesh />
-      
+           
       <header className="app-header">
         <div className="header-brand">
           <img src="/norvan-logo.png" alt="Norvan" className="norvan-logo" />
