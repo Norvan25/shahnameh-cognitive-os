@@ -1,14 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
+import Vapi from '@vapi-ai/web';
 import './VapiOrb.css';
-
-declare global {
-  interface Window {
-    vapiSDK?: {
-      run: (config: any) => any;
-    };
-    vapiInstance?: any;
-  }
-}
 
 interface Props {
   onTranscript?: (text: string, role: 'user' | 'assistant') => void;
@@ -22,30 +14,35 @@ const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
 export function VapiOrb({ onTranscript }: Props) {
-  const [isActive, setIsActive] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
   const [callDuration, setCallDuration] = useState(0);
   const [transcript, setTranscript] = useState<Array<{role: string, text: string}>>([]);
   
+  const vapiRef = useRef<Vapi | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wakeLockRef = useRef<any>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
+  // Format call duration as MM:SS
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Screen wake lock for mobile
   const requestWakeLock = useCallback(async () => {
     if ('wakeLock' in navigator) {
       try {
         wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        console.log('Screen wake lock acquired');
       } catch (err) {
-        console.log('Wake lock failed:', err);
+        console.log('Wake lock request failed:', err);
       }
     }
   }, []);
@@ -54,177 +51,122 @@ export function VapiOrb({ onTranscript }: Props) {
     if (wakeLockRef.current) {
       wakeLockRef.current.release();
       wakeLockRef.current = null;
+      console.log('Screen wake lock released');
     }
   }, []);
 
-  const handleEndCall = useCallback(() => {
-    if (window.vapiInstance) {
-      window.vapiInstance.stop();
-    }
-  }, []);
-
+  // Auto-scroll transcript
   useEffect(() => {
     if (transcriptEndRef.current) {
       transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [transcript]);
 
-  // Function to inject microphone icon into VAPI button
-  const injectMicIcon = useCallback(() => {
-    // Find the VAPI button directly by its class
-    const vapiBtn = document.querySelector('.vapi-btn') as HTMLButtonElement;
-    
-    if (!vapiBtn) return;
-    
-    // Check if we already injected the icon
-    if (vapiBtn.querySelector('.vapi-mic-icon')) return;
-    
-    // Clear existing content and add mic icon
-    vapiBtn.innerHTML = `
-      <svg class="vapi-mic-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;display:block;">
-        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" y1="19" x2="12" y2="23"/>
-        <line x1="8" y1="23" x2="16" y2="23"/>
-      </svg>
-    `;
-    
-    // Apply styles directly
-    vapiBtn.style.cssText = `
-      width: 64px !important;
-      height: 64px !important;
-      min-width: 64px !important;
-      min-height: 64px !important;
-      border-radius: 50% !important;
-      background: linear-gradient(135deg, #66D3FA 0%, #007ACC 100%) !important;
-      border: none !important;
-      cursor: pointer !important;
-      box-shadow: 0 4px 20px rgba(102, 211, 250, 0.4) !important;
-      position: fixed !important;
-      bottom: 24px !important;
-      right: 24px !important;
-      z-index: 9999 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 0 !important;
-    `;
-  }, []);
-
+  // Initialize VAPI SDK
   useEffect(() => {
-    // Load VAPI widget SDK
-    const script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js';
-    script.defer = true;
-    script.async = true;
+    // Create VAPI instance
+    const vapi = new Vapi(VAPI_PUBLIC_KEY);
+    vapiRef.current = vapi;
 
-    script.onload = () => {
-      console.log('VAPI SDK loaded');
+    // Event: Call started
+    vapi.on('call-start', () => {
+      console.log('VAPI: Call started');
+      setIsConnecting(false);
+      setIsConnected(true);
+      setCallDuration(0);
+      setTranscript([]);
+      requestWakeLock();
       
-      if (window.vapiSDK) {
-        window.vapiInstance = window.vapiSDK.run({
-          apiKey: VAPI_PUBLIC_KEY,
-          assistant: VAPI_ASSISTANT_ID,
-          config: {
-            position: 'bottom-right',
-            offset: '24px',
-          },
-        });
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    });
 
-        // Inject mic icon after VAPI creates its button
-        // Try multiple times as VAPI might create button asynchronously
-        setTimeout(injectMicIcon, 500);
-        setTimeout(injectMicIcon, 1000);
-        setTimeout(injectMicIcon, 2000);
-        setTimeout(injectMicIcon, 3000);
+    // Event: Call ended
+    vapi.on('call-end', () => {
+      console.log('VAPI: Call ended');
+      setIsConnected(false);
+      setIsConnecting(false);
+      setIsSpeaking(false);
+      releaseWakeLock();
+      
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    });
 
-        // Also use MutationObserver to catch dynamic changes
-        const observer = new MutationObserver(() => {
-          injectMicIcon();
-        });
+    // Event: AI started speaking
+    vapi.on('speech-start', () => {
+      setIsSpeaking(true);
+    });
+
+    // Event: AI stopped speaking
+    vapi.on('speech-end', () => {
+      setIsSpeaking(false);
+    });
+
+    // Event: Volume level (for waveform)
+    vapi.on('volume-level', (level: number) => {
+      setVolumeLevel(level);
+    });
+
+    // Event: Error
+    vapi.on('error', (error: any) => {
+      console.error('VAPI Error:', error);
+      setIsConnecting(false);
+      setIsConnected(false);
+    });
+
+    // Event: Messages (transcripts)
+    vapi.on('message', (message: any) => {
+      if (message.type === 'transcript' && message.transcriptType === 'final') {
+        const role = message.role === 'assistant' ? 'assistant' : 'user';
+        const text = message.transcript;
         
-        observer.observe(document.body, {
-          childList: true,
-          subtree: true,
-        });
-
-        // Disconnect after 10 seconds to avoid performance issues
-        setTimeout(() => observer.disconnect(), 10000);
-
-        if (window.vapiInstance) {
-          window.vapiInstance.on('call-start', () => {
-            console.log('Call started');
-            setIsActive(true);
-            setCallDuration(0);
-            setTranscript([]);
-            requestWakeLock();
-            
-            timerRef.current = setInterval(() => {
-              setCallDuration(prev => prev + 1);
-            }, 1000);
-
-            // Re-inject icon in case button changed
-            setTimeout(injectMicIcon, 100);
-          });
-
-          window.vapiInstance.on('call-end', () => {
-            console.log('Call ended');
-            setIsActive(false);
-            setIsSpeaking(false);
-            releaseWakeLock();
-            
-            if (timerRef.current) {
-              clearInterval(timerRef.current);
-              timerRef.current = null;
-            }
-
-            setTimeout(injectMicIcon, 100);
-          });
-
-          window.vapiInstance.on('speech-start', () => {
-            setIsSpeaking(true);
-          });
-
-          window.vapiInstance.on('speech-end', () => {
-            setIsSpeaking(false);
-          });
-
-          window.vapiInstance.on('volume-level', (level: number) => {
-            setVolumeLevel(level);
-          });
-
-          window.vapiInstance.on('message', (message: any) => {
-            if (message.type === 'transcript') {
-              const role = message.role === 'assistant' ? 'assistant' : 'user';
-              const text = message.transcript;
-              
-              if (message.transcriptType === 'final') {
-                console.log(`Final transcript [${role}]: ${text}`);
-                setTranscript(prev => [...prev, { role, text }]);
-                
-                if (onTranscript) {
-                  onTranscript(text, role);
-                }
-              }
-            }
-          });
+        console.log(`Transcript [${role}]: ${text}`);
+        setTranscript(prev => [...prev, { role, text }]);
+        
+        // Callback for graph highlighting
+        if (onTranscript) {
+          onTranscript(text, role);
         }
       }
-    };
+    });
 
-    document.body.appendChild(script);
-
+    // Cleanup on unmount
     return () => {
-      if (script.parentNode) script.parentNode.removeChild(script);
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (vapiRef.current) {
+        vapiRef.current.stop();
+      }
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
       releaseWakeLock();
     };
-  }, [requestWakeLock, releaseWakeLock, onTranscript, injectMicIcon]);
+  }, [requestWakeLock, releaseWakeLock, onTranscript]);
+
+  // Toggle call on/off
+  const handleCallToggle = useCallback(() => {
+    if (!vapiRef.current) return;
+
+    if (isConnected) {
+      // End call
+      vapiRef.current.stop();
+    } else if (!isConnecting) {
+      // Start call
+      setIsConnecting(true);
+      vapiRef.current.start(VAPI_ASSISTANT_ID);
+    }
+  }, [isConnected, isConnecting]);
 
   // Waveform animation
   useEffect(() => {
-    if (!isActive || !canvasRef.current) {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    if (!isConnected || !canvasRef.current) {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
       return;
     }
 
@@ -247,7 +189,7 @@ export function VapiOrb({ onTranscript }: Props) {
       ctx.strokeStyle = 'rgba(102, 211, 250, 0.2)';
       ctx.lineWidth = 1;
       for (let x = 0; x < width; x++) {
-        const y = height / 2 + Math.sin(x * 0.02 + time * 1) * baseAmp * 0.4;
+        const y = height / 2 + Math.sin(x * 0.02 + time) * baseAmp * 0.4;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -264,7 +206,7 @@ export function VapiOrb({ onTranscript }: Props) {
       }
       ctx.stroke();
 
-      // Main wave
+      // Main wave with gradient
       ctx.beginPath();
       const gradient = ctx.createLinearGradient(0, 0, width, 0);
       if (isSpeaking) {
@@ -295,59 +237,119 @@ export function VapiOrb({ onTranscript }: Props) {
     draw();
 
     return () => {
-      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+      }
     };
-  }, [isActive, isSpeaking, volumeLevel]);
+  }, [isConnected, isSpeaking, volumeLevel]);
+
+  // Determine button state
+  const getButtonState = () => {
+    if (isConnecting) return 'connecting';
+    if (isConnected) return 'active';
+    return 'idle';
+  };
+
+  const buttonState = getButtonState();
 
   return (
     <>
-      {/* Active Call HUD */}
-      {isActive && (
+      {/* ==================== CALL BUTTON ==================== */}
+      <button 
+        className={`vapi-call-btn vapi-call-btn--${buttonState}`}
+        onClick={handleCallToggle}
+        disabled={isConnecting}
+        aria-label={isConnected ? 'End call' : 'Start call'}
+      >
+        {/* Outer glow ring */}
+        <span className="vapi-call-btn__glow"></span>
+        
+        {/* Inner glow ring */}
+        <span className="vapi-call-btn__inner-glow"></span>
+        
+        {/* Icon container */}
+        <span className="vapi-call-btn__icon">
+          {isConnecting ? (
+            // Connecting spinner
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
+              <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round">
+                <animateTransform
+                  attributeName="transform"
+                  type="rotate"
+                  from="0 12 12"
+                  to="360 12 12"
+                  dur="1s"
+                  repeatCount="indefinite"
+                />
+              </path>
+            </svg>
+          ) : isConnected ? (
+            // End call icon (phone with X)
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91" />
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          ) : (
+            // Microphone icon
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+          )}
+        </span>
+      </button>
+
+      {/* ==================== ACTIVE CALL HUD ==================== */}
+      {isConnected && (
         <div className="vapi-hud">
-          <div className="vapi-hud-header">
-            <div className="vapi-hud-indicator">
-              <span className="vapi-hud-dot"></span>
-              <span className="vapi-hud-status">
+          {/* Header */}
+          <div className="vapi-hud__header">
+            <div className="vapi-hud__status">
+              <span className="vapi-hud__dot"></span>
+              <span className="vapi-hud__label">
                 {isSpeaking ? 'AI Speaking' : 'Listening'}
               </span>
             </div>
-            <div className="vapi-hud-timer">
+            <div className="vapi-hud__timer">
               {formatTime(callDuration)}
             </div>
           </div>
 
-          <div className="vapi-hud-wave">
+          {/* Waveform */}
+          <div className="vapi-hud__wave">
             <canvas 
               ref={canvasRef} 
               width={280} 
               height={50}
-              className="vapi-wave-canvas"
+              className="vapi-hud__canvas"
             />
           </div>
 
-          <div className="vapi-hud-transcript">
+          {/* Transcript */}
+          <div className="vapi-hud__transcript">
             {transcript.length === 0 ? (
-              <p className="vapi-transcript-empty">Conversation will appear here...</p>
+              <p className="vapi-hud__empty">Conversation will appear here...</p>
             ) : (
               transcript.slice(-4).map((item, index) => (
-                <div 
-                  key={index} 
-                  className={`vapi-transcript-item ${item.role}`}
-                >
-                  <span className="vapi-transcript-role">
+                <div key={index} className={`vapi-hud__message vapi-hud__message--${item.role}`}>
+                  <span className="vapi-hud__message-icon">
                     {item.role === 'assistant' ? '🤖' : '👤'}
                   </span>
-                  <span className="vapi-transcript-text">{item.text}</span>
+                  <span className="vapi-hud__message-text">{item.text}</span>
                 </div>
               ))
             )}
             <div ref={transcriptEndRef} />
           </div>
 
-          <button className="vapi-hud-end-btn" onClick={handleEndCall}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
-              <line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" strokeWidth="2.5" />
+          {/* End Call Button */}
+          <button className="vapi-hud__end-btn" onClick={handleCallToggle}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-3.33-2.67m-2.67-3.34a19.79 19.79 0 0 1-3.07-8.63A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91" />
+              <line x1="1" y1="1" x2="23" y2="23" />
             </svg>
             <span>End Call</span>
           </button>
