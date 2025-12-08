@@ -40,7 +40,7 @@ export function VapiOrb({ onTranscript }: Props) {
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wakeLockRef = useRef<any>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<MutationObserver | null>(null);
