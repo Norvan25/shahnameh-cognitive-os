@@ -31,25 +31,6 @@ body {
     url('/neurolinks-bg.png') center center / cover no-repeat,
     #0D1326;
 }
-
-/* Neurolinks background pattern */
-.app-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(102, 211, 250, 0.03) 0%, transparent 2%),
-    radial-gradient(circle at 75% 75%, rgba(127, 79, 201, 0.03) 0%, transparent 2%),
-    radial-gradient(circle at 50% 10%, rgba(0, 158, 96, 0.02) 0%, transparent 2%),
-    radial-gradient(circle at 10% 80%, rgba(242, 133, 0, 0.02) 0%, transparent 2%);
-  background-size: 60px 60px, 80px 80px, 100px 100px, 70px 70px;
-  pointer-events: none;
-  z-index: 0;
-}
-
 /* ============================================
    HEADER
    ============================================ */
