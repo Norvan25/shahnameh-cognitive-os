@@ -7,18 +7,6 @@ import { shahnamehData } from './data/shahnameh-graph';
 import type { CognitiveNode } from './types/graph.types';
 import './App.css';
 
-// ... rest of your file stays the same
-
-function App() {
-  // ... your existing state and functions
-
-  return (
-    <div className="app-container">
-      <TesseractMesh />
-      
-      <header className="app-header">
-        {/* ... rest stays same */}
-
 // Character name mappings for voice recognition
 const CHARACTER_KEYWORDS: Record<string, string[]> = {
   'awareness': ['awareness', 'observer', 'witness', 'consciousness'],
@@ -61,12 +49,11 @@ function App() {
 
   // Handle transcript from VAPI - detect character names
   const handleTranscript = useCallback((text: string, role: 'user' | 'assistant') => {
-    if (role !== 'assistant') return; // Only highlight when AI speaks
+    if (role !== 'assistant') return;
     
     const lowerText = text.toLowerCase();
     const matchedIds: string[] = [];
 
-    // Check each character's keywords
     Object.entries(CHARACTER_KEYWORDS).forEach(([nodeId, keywords]) => {
       for (const keyword of keywords) {
         if (lowerText.includes(keyword)) {
@@ -79,7 +66,6 @@ function App() {
     if (matchedIds.length > 0) {
       setVoiceHighlightIds(matchedIds);
       
-      // Clear highlight after 5 seconds
       setTimeout(() => {
         setVoiceHighlightIds([]);
       }, 5000);
@@ -103,7 +89,6 @@ function App() {
       });
     }
 
-    // Combine both, prioritizing voice highlights
     const combined = [...new Set([...voiceHighlightIds, ...searchHighlights])];
     return combined;
   };
@@ -112,7 +97,7 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* Background handled by CSS */}
+      <TesseractMesh />
       
       <header className="app-header">
         <div className="header-brand">
@@ -182,7 +167,6 @@ function App() {
         onClose={handleClosePanel}
       />
 
-      {/* VAPI with transcript callback for graph highlighting */}
       <VapiOrb onTranscript={handleTranscript} />
     </div>
   );
