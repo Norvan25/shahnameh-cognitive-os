@@ -29,6 +29,9 @@ export function InfoPanel({ node, connections, allNodes, onClose }: Props) {
     return n ? n.nameEN : id;
   };
 
+  // Responsive icon size
+  const iconSize = typeof window !== 'undefined' && window.innerWidth < 768 ? 56 : 52;
+
   return (
     <>
       <div className="info-panel-overlay" onClick={onClose} />
@@ -40,7 +43,7 @@ export function InfoPanel({ node, connections, allNodes, onClose }: Props) {
             <ArchetypeIcon 
               archetype={node.id} 
               color={node.color} 
-              size={48} 
+              size={iconSize} 
             />
           </div>
           <div className="names">
