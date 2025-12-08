@@ -2,9 +2,22 @@ import { useState, useCallback } from 'react';
 import { CognitiveGraph } from './components/Graph/CognitiveGraph';
 import { InfoPanel } from './components/InfoPanel/InfoPanel';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
+import { TesseractMesh } from './components/Background/TesseractMesh';
 import { shahnamehData } from './data/shahnameh-graph';
 import type { CognitiveNode } from './types/graph.types';
 import './App.css';
+
+// ... rest of your file stays the same
+
+function App() {
+  // ... your existing state and functions
+
+  return (
+    <div className="app-container">
+      <TesseractMesh />
+      
+      <header className="app-header">
+        {/* ... rest stays same */}
 
 // Character name mappings for voice recognition
 const CHARACTER_KEYWORDS: Record<string, string[]> = {
