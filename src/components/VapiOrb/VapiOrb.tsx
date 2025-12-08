@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import './VapiOrb.css';
 
 declare global {
@@ -10,6 +10,10 @@ declare global {
   }
 }
 
+interface Props {
+  onTranscript?: (text: string, role: 'user' | 'assistant') => void;
+}
+
 // =====================================================
 // YOUR VAPI CREDENTIALS
 // =====================================================
@@ -17,12 +21,60 @@ const VAPI_PUBLIC_KEY = '49e26799-5a5d-490a-9805-e4ee9c4a6fea';
 const VAPI_ASSISTANT_ID = '19d88bcb-46d6-4eb3-bb2f-5b966e4019ed';
 // =====================================================
 
-export function VapiOrb() {
+export function VapiOrb({ onTranscript }: Props) {
   const [isActive, setIsActive] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [volumeLevel, setVolumeLevel] = useState(0);
+  const [callDuration, setCallDuration] = useState(0);
+  const [transcript, setTranscript] = useState<Array<{role: string, text: string}>>([]);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number | undefined>(undefined);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockRef = useRef<any>(null);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
+
+  // Format seconds to MM:SS
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Request wake lock to keep screen on
+  const requestWakeLock = useCallback(async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        console.log('Wake lock acquired');
+      } catch (err) {
+        console.log('Wake lock failed:', err);
+      }
+    }
+  }, []);
+
+  // Release wake lock
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      wakeLockRef.current.release();
+      wakeLockRef.current = null;
+      console.log('Wake lock released');
+    }
+  }, []);
+
+  // End call function
+  const handleEndCall = useCallback(() => {
+    if (window.vapiInstance) {
+      window.vapiInstance.stop();
+    }
+  }, []);
+
+  // Auto-scroll transcript
+  useEffect(() => {
+    if (transcriptEndRef.current) {
+      transcriptEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [transcript]);
 
   useEffect(() => {
     // Add custom styles to override VAPI button appearance
@@ -45,6 +97,9 @@ export function VapiOrb() {
         right: 24px !important;
         position: fixed !important;
         z-index: 100 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       #vapi-support-btn:hover,
@@ -64,22 +119,27 @@ export function VapiOrb() {
         box-shadow: 0 4px 20px rgba(0, 158, 96, 0.4) !important;
       }
 
-      /* Style the icon inside */
+      /* Hide default icon */
       #vapi-support-btn svg,
       .vapi-btn svg,
-      [data-vapi-btn] svg {
-        width: 28px !important;
-        height: 28px !important;
-        color: white !important;
-        fill: white !important;
-      }
-
+      [data-vapi-btn] svg,
       #vapi-support-btn img,
       .vapi-btn img,
       [data-vapi-btn] img {
-        width: 28px !important;
-        height: 28px !important;
-        filter: brightness(0) invert(1) !important;
+        display: none !important;
+      }
+
+      /* Add custom microphone icon */
+      #vapi-support-btn::before,
+      .vapi-btn::before,
+      [data-vapi-btn]::before {
+        content: '';
+        width: 28px;
+        height: 28px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z'/%3E%3Cpath d='M19 10v2a7 7 0 0 1-14 0v-2'/%3E%3Cline x1='12' y1='19' x2='12' y2='23'/%3E%3Cline x1='8' y1='23' x2='16' y2='23'/%3E%3C/svg%3E");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
       }
 
       /* Hide any default VAPI branding/text */
@@ -93,18 +153,17 @@ export function VapiOrb() {
         #vapi-support-btn,
         .vapi-btn,
         [data-vapi-btn] {
-          width: 56px !important;
-          height: 56px !important;
-          bottom: 16px !important;
-          right: 16px !important;
+          width: 60px !important;
+          height: 60px !important;
+          bottom: 20px !important;
+          right: 20px !important;
         }
 
-        #vapi-support-btn svg,
-        .vapi-btn svg,
-        #vapi-support-btn img,
-        .vapi-btn img {
-          width: 24px !important;
-          height: 24px !important;
+        #vapi-support-btn::before,
+        .vapi-btn::before,
+        [data-vapi-btn]::before {
+          width: 26px;
+          height: 26px;
         }
       }
     `;
@@ -131,11 +190,26 @@ export function VapiOrb() {
         if (window.vapiInstance) {
           window.vapiInstance.on('call-start', () => {
             setIsActive(true);
+            setCallDuration(0);
+            setTranscript([]);
+            requestWakeLock();
+            
+            // Start timer
+            timerRef.current = setInterval(() => {
+              setCallDuration(prev => prev + 1);
+            }, 1000);
           });
 
           window.vapiInstance.on('call-end', () => {
             setIsActive(false);
             setIsSpeaking(false);
+            releaseWakeLock();
+            
+            // Stop timer
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
           });
 
           window.vapiInstance.on('speech-start', () => {
@@ -149,6 +223,23 @@ export function VapiOrb() {
           window.vapiInstance.on('volume-level', (level: number) => {
             setVolumeLevel(level);
           });
+
+          // Listen for transcript messages
+          window.vapiInstance.on('message', (message: any) => {
+            if (message.type === 'transcript') {
+              const role = message.role === 'assistant' ? 'assistant' : 'user';
+              const text = message.transcript;
+              
+              if (message.transcriptType === 'final') {
+                setTranscript(prev => [...prev, { role, text }]);
+                
+                // Send to parent for graph highlighting
+                if (onTranscript) {
+                  onTranscript(text, role);
+                }
+              }
+            }
+          });
         }
       }
     };
@@ -159,10 +250,12 @@ export function VapiOrb() {
       const styleEl = document.getElementById('vapi-custom-styles');
       if (styleEl) styleEl.remove();
       if (script.parentNode) script.parentNode.removeChild(script);
+      if (timerRef.current) clearInterval(timerRef.current);
+      releaseWakeLock();
     };
-  }, []);
+  }, [requestWakeLock, releaseWakeLock, onTranscript]);
 
-  // Waveform animation
+  // Waveform animation - more responsive
   useEffect(() => {
     if (!isActive || !canvasRef.current) {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -179,28 +272,29 @@ export function VapiOrb() {
       
       ctx.clearRect(0, 0, width, height);
       
-      // Draw multiple wave layers
       const time = Date.now() / 1000;
-      const baseAmp = isSpeaking ? 12 + volumeLevel * 25 : 6;
+      // More responsive to volume
+      const baseAmp = isSpeaking ? 8 + volumeLevel * 40 : 4;
+      const speed = isSpeaking ? 4 : 2;
 
       // Background wave (subtle)
       ctx.beginPath();
-      ctx.strokeStyle = 'rgba(102, 211, 250, 0.3)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(102, 211, 250, 0.2)';
+      ctx.lineWidth = 1;
       for (let x = 0; x < width; x++) {
-        const y = height / 2 + Math.sin(x * 0.03 + time * 1.5) * baseAmp * 0.5;
+        const y = height / 2 + Math.sin(x * 0.02 + time * 1) * baseAmp * 0.4;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
 
       // Middle wave
       ctx.beginPath();
-      ctx.strokeStyle = isSpeaking ? 'rgba(102, 211, 250, 0.6)' : 'rgba(0, 158, 96, 0.5)';
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = isSpeaking ? 'rgba(102, 211, 250, 0.5)' : 'rgba(0, 158, 96, 0.4)';
+      ctx.lineWidth = 1.5;
       for (let x = 0; x < width; x++) {
         const y = height / 2 + 
-          Math.sin(x * 0.04 + time * 2.5) * baseAmp * 0.7 +
-          Math.sin(x * 0.02 + time * 1.8) * baseAmp * 0.3;
+          Math.sin(x * 0.03 + time * speed * 0.8) * baseAmp * 0.6 +
+          Math.sin(x * 0.05 + time * speed * 0.5) * baseAmp * 0.3;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -218,14 +312,14 @@ export function VapiOrb() {
         gradient.addColorStop(1, '#009E60');
       }
       ctx.strokeStyle = gradient;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
       ctx.lineCap = 'round';
 
       for (let x = 0; x < width; x++) {
         const y = height / 2 + 
-          Math.sin(x * 0.05 + time * 3) * baseAmp +
-          Math.sin(x * 0.02 + time * 2) * baseAmp * 0.5 +
-          Math.sin(x * 0.08 + time * 4) * baseAmp * 0.3;
+          Math.sin(x * 0.04 + time * speed) * baseAmp +
+          Math.sin(x * 0.02 + time * speed * 0.7) * baseAmp * 0.5 +
+          Math.sin(x * 0.06 + time * speed * 1.3) * baseAmp * 0.25;
         x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
@@ -245,6 +339,7 @@ export function VapiOrb() {
       {/* Active Call HUD */}
       {isActive && (
         <div className="vapi-hud">
+          {/* Header with status and timer */}
           <div className="vapi-hud-header">
             <div className="vapi-hud-indicator">
               <span className="vapi-hud-dot"></span>
@@ -252,30 +347,49 @@ export function VapiOrb() {
                 {isSpeaking ? 'AI Speaking' : 'Listening'}
               </span>
             </div>
-            <div className="vapi-hud-icon">
-              {isSpeaking ? (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                  <line x1="12" y1="19" x2="12" y2="23" />
-                  <line x1="8" y1="23" x2="16" y2="23" />
-                </svg>
-              )}
+            <div className="vapi-hud-timer">
+              {formatTime(callDuration)}
             </div>
           </div>
+
+          {/* Waveform */}
           <div className="vapi-hud-wave">
             <canvas 
               ref={canvasRef} 
-              width={220} 
+              width={280} 
               height={50}
               className="vapi-wave-canvas"
             />
           </div>
+
+          {/* Transcript */}
+          <div className="vapi-hud-transcript">
+            {transcript.length === 0 ? (
+              <p className="vapi-transcript-empty">Conversation will appear here...</p>
+            ) : (
+              transcript.slice(-4).map((item, index) => (
+                <div 
+                  key={index} 
+                  className={`vapi-transcript-item ${item.role}`}
+                >
+                  <span className="vapi-transcript-role">
+                    {item.role === 'assistant' ? '🤖' : '👤'}
+                  </span>
+                  <span className="vapi-transcript-text">{item.text}</span>
+                </div>
+              ))
+            )}
+            <div ref={transcriptEndRef} />
+          </div>
+
+          {/* End Call Button */}
+          <button className="vapi-hud-end-btn" onClick={handleEndCall}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+              <line x1="1" y1="1" x2="23" y2="23" stroke="#E63946" strokeWidth="2.5" />
+            </svg>
+            <span>End Call</span>
+          </button>
         </div>
       )}
     </>
