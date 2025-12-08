@@ -28,9 +28,7 @@ body {
   position: relative;
   overflow: hidden;
   background: 
-    radial-gradient(ellipse at 20% 20%, rgba(102, 211, 250, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 80%, rgba(127, 79, 201, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(0, 158, 96, 0.05) 0%, transparent 70%),
+    url('/neurolinks-bg.png') center center / cover no-repeat,
     #0D1326;
 }
 
