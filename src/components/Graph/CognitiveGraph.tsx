@@ -17,6 +17,18 @@ const CONNECTION_COLORS: Record<RelationshipType, string> = {
   integrates_with: 'rgba(255, 255, 255, 0.4)',
 };
 
+// Responsive text sizes
+const getTextSizes = () => {
+  const isMobile = window.innerWidth < 768;
+  return {
+    labelEN: isMobile ? '16px' : '14px',
+    labelFA: isMobile ? '14px' : '12px',
+    labelENAwareness: isMobile ? '18px' : '16px',
+    labelFAAwareness: isMobile ? '16px' : '14px',
+    fontWeightEN: isMobile ? '700' : '600',
+  };
+};
+
 export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,6 +46,16 @@ export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: P
         if (!hasHighlight) return 1;
         return highlightedNodeIds.includes(d.id) ? 1 : 0.15;
       });
+
+    // Add pulsing effect to highlighted nodes
+    nodesRef.current.each(function(d: any) {
+      const el = d3.select(this);
+      if (hasHighlight && highlightedNodeIds.includes(d.id)) {
+        el.classed('voice-highlighted', true);
+      } else {
+        el.classed('voice-highlighted', false);
+      }
+    });
 
     linksRef.current
       .attr('opacity', (d: any) => {
@@ -53,6 +75,8 @@ export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: P
     const height = container.clientHeight || window.innerHeight;
 
     if (width === 0 || height === 0) return;
+
+    const textSizes = getTextSizes();
 
     const svg = d3.select(svgRef.current)
       .attr('width', width)
@@ -99,6 +123,23 @@ export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: P
     awMerge.append('feMergeNode').attr('in', 'blur1');
     awMerge.append('feMergeNode').attr('in', 'blur2');
     awMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    // Voice highlight glow filter
+    const voiceGlow = defs.append('filter')
+      .attr('id', 'voice-highlight-glow')
+      .attr('x', '-100%')
+      .attr('y', '-100%')
+      .attr('width', '300%')
+      .attr('height', '300%');
+    
+    voiceGlow.append('feGaussianBlur')
+      .attr('stdDeviation', '8')
+      .attr('result', 'blur');
+    
+    const voiceMerge = voiceGlow.append('feMerge');
+    voiceMerge.append('feMergeNode').attr('in', 'blur');
+    voiceMerge.append('feMergeNode').attr('in', 'blur');
+    voiceMerge.append('feMergeNode').attr('in', 'SourceGraphic');
 
     // Radial gradient for awareness
     const awarenessGradient = defs.append('radialGradient')
@@ -291,24 +332,30 @@ export function CognitiveGraph({ data, onNodeClick, highlightedNodeIds = [] }: P
       .attr('stroke', 'none')
       .style('cursor', 'pointer');
 
-    // Labels
+    // Labels - INCREASED SIZES
     node.append('text')
       .attr('class', 'label-en')
       .attr('dy', (d: any) => getNodeSize(d) * 0.5 + 24)
       .attr('text-anchor', 'middle')
       .attr('fill', '#FFFFFF')
-      .attr('font-size', (d: any) => d.id === 'awareness-os' ? '14px' : '12px')
+      .attr('font-size', (d: any) => d.id === 'awareness-os' ? textSizes.labelENAwareness : textSizes.labelEN)
       .attr('font-family', 'Poppins, sans-serif')
-      .attr('font-weight', '600')
+      .attr('font-weight', textSizes.fontWeightEN)
+      .attr('paint-order', 'stroke')
+      .attr('stroke', 'rgba(0,0,0,0.8)')
+      .attr('stroke-width', '3px')
       .text((d: any) => d.nameEN);
 
     node.append('text')
       .attr('class', 'label-fa')
-      .attr('dy', (d: any) => getNodeSize(d) * 0.5 + 42)
+      .attr('dy', (d: any) => getNodeSize(d) * 0.5 + 44)
       .attr('text-anchor', 'middle')
-      .attr('fill', 'rgba(255,255,255,0.6)')
-      .attr('font-size', (d: any) => d.id === 'awareness-os' ? '13px' : '11px')
+      .attr('fill', 'rgba(255,255,255,0.8)')
+      .attr('font-size', (d: any) => d.id === 'awareness-os' ? textSizes.labelFAAwareness : textSizes.labelFA)
       .attr('font-family', 'Vazirmatn, sans-serif')
+      .attr('paint-order', 'stroke')
+      .attr('stroke', 'rgba(0,0,0,0.6)')
+      .attr('stroke-width', '2px')
       .text((d: any) => d.nameFA);
 
     // Click handler
