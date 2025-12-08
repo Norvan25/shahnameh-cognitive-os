@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CognitiveGraph } from './components/Graph/CognitiveGraph';
 import { InfoPanel } from './components/InfoPanel/InfoPanel';
 import { VapiOrb } from './components/VapiOrb/VapiOrb';
@@ -6,9 +6,37 @@ import { shahnamehData } from './data/shahnameh-graph';
 import type { CognitiveNode } from './types/graph.types';
 import './App.css';
 
+// Character name mappings for voice recognition
+const CHARACTER_KEYWORDS: Record<string, string[]> = {
+  'awareness': ['awareness', 'observer', 'witness', 'consciousness'],
+  'simorgh': ['simorgh', 'simurgh', 'phoenix', 'bird'],
+  'rostam': ['rostam', 'rustam', 'hero', 'survival'],
+  'sohrab': ['sohrab', 'potential', 'son of rostam'],
+  'zahhak': ['zahhak', 'zahak', 'snake', 'serpent', 'shame'],
+  'siyavash': ['siyavash', 'siavash', 'guilt', 'innocent'],
+  'kay-khosrow': ['kay khosrow', 'khosrow', 'wisdom', 'wise king'],
+  'kay-kavous': ['kay kavous', 'kavous', 'kavus', 'impulse', 'ego'],
+  'zal': ['zal', 'intuition', 'white hair'],
+  'kaveh': ['kaveh', 'blacksmith', 'rebellion', 'rebel'],
+  'fereydun': ['fereydun', 'feridun', 'justice'],
+  'jamshid': ['jamshid', 'creativity', 'imagination'],
+  'esfandiyar': ['esfandiyar', 'isfandiyar', 'duty', 'invulnerable'],
+  'afrasiab': ['afrasiab', 'turan', 'enemy', 'threat'],
+  'sudabeh': ['sudabeh', 'manipulation', 'desire'],
+  'tahmineh': ['tahmineh', 'mother', 'container'],
+  'rakhsh': ['rakhsh', 'horse', 'body'],
+  'div-sepid': ['div sepid', 'white demon', 'fear', 'demon'],
+  'piran': ['piran', 'loyalty', 'conflicted'],
+  'garsivaz': ['garsivaz', 'betrayer', 'sabotage'],
+  'goshtasp': ['goshtasp', 'gushtasp', 'insecurity'],
+  'manuchehr': ['manuchehr', 'order', 'restoration'],
+  'khvarenah': ['khvarenah', 'farr', 'glory', 'divine'],
+};
+
 function App() {
   const [selectedNode, setSelectedNode] = useState<CognitiveNode | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [voiceHighlightIds, setVoiceHighlightIds] = useState<string[]>([]);
 
   const handleNodeClick = (node: CognitiveNode) => {
     setSelectedNode(node);
@@ -18,18 +46,53 @@ function App() {
     setSelectedNode(null);
   };
 
-  // Filter nodes based on search
-  const getHighlightedNodeIds = (): string[] => {
-    if (!searchQuery.trim()) return [];
+  // Handle transcript from VAPI - detect character names
+  const handleTranscript = useCallback((text: string, role: 'user' | 'assistant') => {
+    if (role !== 'assistant') return; // Only highlight when AI speaks
     
-    const query = searchQuery.toLowerCase();
-    return shahnamehData.nodes
-      .filter(node => 
-        node.nameEN.toLowerCase().includes(query) ||
-        node.nameFA.includes(searchQuery) ||
-        node.role.toLowerCase().includes(query)
-      )
-      .map(node => node.id);
+    const lowerText = text.toLowerCase();
+    const matchedIds: string[] = [];
+
+    // Check each character's keywords
+    Object.entries(CHARACTER_KEYWORDS).forEach(([nodeId, keywords]) => {
+      for (const keyword of keywords) {
+        if (lowerText.includes(keyword)) {
+          matchedIds.push(nodeId);
+          break;
+        }
+      }
+    });
+
+    if (matchedIds.length > 0) {
+      setVoiceHighlightIds(matchedIds);
+      
+      // Clear highlight after 5 seconds
+      setTimeout(() => {
+        setVoiceHighlightIds([]);
+      }, 5000);
+    }
+  }, []);
+
+  // Combine search and voice highlights
+  const getHighlightedNodeIds = (): string[] => {
+    const searchHighlights: string[] = [];
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      shahnamehData.nodes.forEach(node => {
+        if (
+          node.nameEN.toLowerCase().includes(query) ||
+          node.nameFA.includes(searchQuery) ||
+          node.role.toLowerCase().includes(query)
+        ) {
+          searchHighlights.push(node.id);
+        }
+      });
+    }
+
+    // Combine both, prioritizing voice highlights
+    const combined = [...new Set([...voiceHighlightIds, ...searchHighlights])];
+    return combined;
   };
 
   const highlightedNodes = getHighlightedNodeIds();
@@ -106,8 +169,8 @@ function App() {
         onClose={handleClosePanel}
       />
 
-      {/* VAPI button - styled to match our design */}
-      <VapiOrb />
+      {/* VAPI with transcript callback for graph highlighting */}
+      <VapiOrb onTranscript={handleTranscript} />
     </div>
   );
 }
